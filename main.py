@@ -5,7 +5,6 @@ import pymongo
 import logging
 from discord.ext import commands
 from dotenv import load_dotenv
-from User import User # import user class
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 
@@ -17,6 +16,9 @@ PASSWORD = os.getenv("MONGO_PASSWORD")
 HOST = os.getenv("MONGO_HOST")
 DATABASE = os.getenv("DATABASE")
 uri = f"mongodb+srv://{USER}:{PASSWORD}@{HOST}/{DATABASE}?retryWrites=true&w=majority"
+
+# api endpoints
+random_word_url = "https://random-word-api.vercel.app/api?words=1"
 
 # Create a new client and connect to the server
 mongoClient = MongoClient(uri, server_api=ServerApi('1'))
@@ -61,8 +63,9 @@ async def on_ready():
 @bot.command(name="register")
 async def register(ctx):
     user_id = str(ctx.author.id)
-    print("user's discord id:" + user_id)
+    print(f"user's discord id: {ctx.author.name} " + user_id)
     existing_user = userCollection.find_one({"id": user_id})
+
 
     if existing_user:
         print("user exists in database")
@@ -70,8 +73,11 @@ async def register(ctx):
         # create new user document
         new_user_data = {
             "id":user_id,
-            "languages": [],
-            "words_learned": {}
+            "languages": ["English"],
+            "words_learned": {
+                "English": []
+            },
+            "set_lang" : "English"
         }
         # insert new user into users
         result = userCollection.insert_one(new_user_data)
@@ -79,9 +85,20 @@ async def register(ctx):
 
         if result.acknowledged:
             print(f"successfully inserted {ctx.author} added with ID: {result.inserted_id}")
+            welcome_message = (
+                f"Welcome, {ctx.author.mention}!\n\n"
+                f"You are now ready to start learning a new language!\n"
+                f"To start learning new words, use `$new`.\n"
+                f"The default learning language is set to English. To set your preferred learning language,"
+                f"use the `$set` command followed by the language name.\n"
+                f"Example: `$set spanish` means you'll start learning new Spanish words.\n"
+                f"Use `$help` or `$commands` to view additional commands."
+            )
+            await ctx.send(welcome_message)
         else:
             print("failed to insert user data")
             logger.error(f"error inserting user data: {ctx.author}")
+            await ctx.send(f"Sorry! I couldn't add you to the game, try `$register` command again later.")
 
 
 # list of commands
@@ -100,7 +117,7 @@ bot.remove_command('help')
 async def help_response(ctx):
     help_dm = f"How to use {bot.user.name}\n" \
               f"Commands used:\n" \
-              f"$help: say hello to {bot.user.name}"
+              f"`$help`: say hello to {bot.user.name}"
 
     try:
         await ctx.author.send(help_dm)
@@ -117,17 +134,86 @@ async def say_hello(ctx):
     await ctx.send(response)
 
 
+# check user discord id and name
 @bot.command(name="check")
 async def check(ctx):
     print(ctx.author.name)
     print(ctx.author.id)
     print(ctx.author.name + " checked")
 
-
+# figure out how to do the custom decorator function @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 # get daily word
-@bot.command(name="daily")
+@bot.command(name="new")
 async def daily_new_word(ctx):
-    pass
+    user_id = str(ctx.author.id)
+    existing_user = userCollection.find_one({"id": user_id})
+
+    if existing_user:
+        word = get_random_word()
+
+        if word is not None:
+            await ctx.send(f"Your new word is: `{word}`")
+
+            # store new word into users collection
+            set_lang = existing_user.get("set_lang")
+            store_word_users(userCollection, user_id, set_lang, word)
+
+            # store new word into words collection --------------------------------------------------------------------
+        else:
+            await ctx.send("Failed to fetch a new word. Please try again later.")
+    else:
+        print(
+            f"{ctx.author.name} {ctx.author.id} rolled a new word but they are not registered in the database.")
+        await ctx.send(f"{ctx.author.name} is not registered yet! Use the `$register` command to start learning.")
+
+
+# function to return a randomly generated word using vercel api
+def get_random_word():
+    try:
+        random_word_response = requests.get(url=random_word_url)
+        random_word_response.raise_for_status()  # grab http error code
+        data = random_word_response.json()[0]  # grab the random word
+        print(f"generated word: {data}")
+        return data
+    except requests.exceptions.RequestException as e:
+        logger.error(f"An error occurred while fetching a random word: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"An unexpected error occurred: {e}")
+        return None
+
+
+# function to store new word into words_learned dictionary in users collection
+def store_word_users(users_collection, user_id, language, word):
+    id_filter = {"id": user_id}
+
+    if language in users_collection.find_one(id_filter).get("words_learned", []):
+        print(f"{language} is a valid language that the user set")
+        update_query = {"$push": {f"words_learned.{language}": word}}
+
+        # attempt to update user's doc
+        result = users_collection.update_one(id_filter, update_query)
+        if result.acknowledged:
+            print(f"Successfully added the word '{word}' to the user's words_learned in {language}.")
+        else:
+            print(f"Failed to add the word '{word}' to the user's words_learned in {language}.")
+
+
+# figure out how to do the custom decorator function @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+# users can check their set language, english is default
+@bot.command(name="lang")
+async def what_is_my_lang(ctx):
+    user_id = str(ctx.author.id)
+    existing_user = userCollection.find_one({"id": user_id})
+
+    if existing_user:
+        set_lang = existing_user.get("set_lang")
+        print(f"{ctx.author.name} {ctx.author.id} checked their set language: which is: {set_lang}")
+        await ctx.send(f"Your set language is {set_lang}")
+    else:
+        print(f"{ctx.author.name} {ctx.author.id} checked their set language but they are not registered in the database.")
+        await ctx.send(f"{ctx.author.name} is not registered yet! Use the `$register` command to start learning.")
+
 
 bot.run(TOKEN)
 mongoClient.close()
