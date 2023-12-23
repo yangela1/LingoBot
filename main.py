@@ -19,6 +19,7 @@ uri = f"mongodb+srv://{USER}:{PASSWORD}@{HOST}/{DATABASE}?retryWrites=true&w=maj
 
 # api endpoints
 random_word_url = "https://random-word-api.vercel.app/api?words=1"
+definition_url = "https://api.dictionaryapi.dev/api/v2/entries/en/"
 
 # Create a new client and connect to the server
 mongoClient = MongoClient(uri, server_api=ServerApi('1'))
@@ -30,9 +31,8 @@ try:
 except Exception as e:
     print(e)
 
-db = mongoClient[DATABASE]
-
 # access collection user
+db = mongoClient[DATABASE]
 userCollection = db["users"]
 
 # Configure the logger
@@ -141,6 +141,7 @@ async def check(ctx):
     print(ctx.author.id)
     print(ctx.author.name + " checked")
 
+
 # figure out how to do the custom decorator function @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 # get daily word
 @bot.command(name="new")
@@ -149,16 +150,23 @@ async def daily_new_word(ctx):
     existing_user = userCollection.find_one({"id": user_id})
 
     if existing_user:
-        word = get_random_word()
+        word = get_random_word()  # get random word
 
         if word is not None:
-            await ctx.send(f"Your new word is: `{word}`")
+            word_def = get_def(word)  # get definition for the word
 
-            # store new word into users collection
-            set_lang = existing_user.get("set_lang")
-            store_word_users(userCollection, user_id, set_lang, word)
+            # check if word_def is not None before sending the message
+            if word_def is not None:
+                await ctx.send(f"Your new word is:`{word}`\n"
+                               f"`{word_def}`")
 
-            # store new word into words collection --------------------------------------------------------------------
+                # store new word into users collection
+                set_lang = existing_user.get("set_lang")
+                store_word_users(userCollection, user_id, set_lang, word)
+
+                # store new word into words collection ---------------------------------------------------
+            else:
+                await ctx.send("Failed to fetch a new word. Please try again later.")
         else:
             await ctx.send("Failed to fetch a new word. Please try again later.")
     else:
@@ -197,6 +205,37 @@ def store_word_users(users_collection, user_id, language, word):
             print(f"Successfully added the word '{word}' to the user's words_learned in {language}.")
         else:
             print(f"Failed to add the word '{word}' to the user's words_learned in {language}.")
+
+
+# function to get the definition of the word using dictionary api
+def get_def(word):
+    word_url = definition_url + word
+
+    try:
+        definition_response = requests.get(url=word_url)
+        definition_response.raise_for_status()  # grab http error code
+        data = definition_response.json()
+
+        # access definitions
+        meanings = data[0]["meanings"]
+        first_part_of_speech = meanings[0]["partOfSpeech"]
+        first_definition = meanings[0]["definitions"][0]["definition"].lower().rstrip('.')
+
+        result = (f"{first_part_of_speech}\n"
+                  f"{first_definition}")
+        print(f"successfully requested word definition")
+        return result
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Definition request exception: {e} \nError: Unable to fetch definition for '{word}'")
+        return None
+    except (IndexError, KeyError) as e:
+        # Handle JSON parsing errors or missing data
+        logging.error(f"JSON Parsing Error: {e} \nError: No definition found for '{word}'")
+        return None
+    except Exception as e:
+        # Handle other unexpected errors
+        logging.error(f"An unexpected error occurred: {e} \nError: An unexpected error occurred for '{word}'")
+        return None
 
 
 # figure out how to do the custom decorator function @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
