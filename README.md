@@ -1,1 +1,1 @@
-walmart version duolingo but on discord
+word learning game 
