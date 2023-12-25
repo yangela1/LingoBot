@@ -31,7 +31,7 @@ bot.remove_command('help')
 async def help_response(ctx):
     help_dm = f"How to use {bot.user.name}\n" \
               f"Commands used:\n" \
-              f"`$help`: say hello to {bot.user.name}"
+
 
     try:
         await ctx.author.send(help_dm)
@@ -55,20 +55,5 @@ async def check(ctx):
     print(ctx.author.id)
     print(ctx.author.name + " checked")
 
-
-# figure out how to do the custom decorator function @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-# users can check their set language, english is default
-@bot.command(name="lang")
-async def what_is_my_lang(ctx):
-    user_id = str(ctx.author.id)
-    existing_user = userCollection.find_one({"id": user_id})
-
-    if existing_user:
-        set_lang = existing_user.get("set_lang")
-        print(f"{ctx.author.name} {ctx.author.id} checked their set language: which is: {set_lang}")
-        await ctx.send(f"Your set language is {set_lang}")
-    else:
-        print(f"{ctx.author.name} {ctx.author.id} checked their set language but they are not registered in the database.")
-        await ctx.send(f"{ctx.author.name} is not registered yet! Use the `$register` command to start learning.")
 
 
