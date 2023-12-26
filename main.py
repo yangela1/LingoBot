@@ -11,7 +11,7 @@ from database import TOKEN
 intents = discord.Intents.all()
 intents.members = True
 intents.messages = True
-bot = commands.Bot(command_prefix='$', intents=intents)
+bot = commands.Bot(command_prefix='$', intents=intents, description="LingoBot")
 
 # Configure the logger
 logging.basicConfig(level=logging.ERROR, filename='bot_errors.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -22,10 +22,12 @@ bot.remove_command('help')
 
 # register imported commands with the bot
 bot.add_command(game_commands.new_game)
+bot.add_command(game_commands.testing)
 bot.add_command(general_commands.commands)
 bot.add_command(general_commands.help_response)
 bot.add_command(general_commands.check)
 bot.add_command(general_commands.say_hello)
+
 
 
 # this is called when bot is ready to start being used

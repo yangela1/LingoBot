@@ -30,9 +30,6 @@ async def new_game(ctx):
     get_random_words()  # get random word
 
 
-
-
-
 # function to return a randomly generated word using vercel api
 def get_random_words():
     try:
@@ -96,3 +93,30 @@ def store_word_users(users_collection, user_id, language, word):
             print(f"Successfully added the word '{word}' to the user's words_learned in {language}.")
         else:
             print(f"Failed to add the word '{word}' to the user's words_learned in {language}.")
+
+
+@bot.command(name="test")
+async def testing(ctx):
+    question = "hindered"
+    descr1 = "xasdasdasdasdas"
+    descr2 = "fasdjaskdjkajsd"
+    descr3 = "asldjaksdjasd"
+    lives = 3
+    embed = interactive_embed(question, descr1, descr2, descr3, lives)
+
+    # send embed with buttons
+    await ctx.send(embed=embed)
+
+
+# function to show question
+def interactive_embed(word, descr1, descr2, descr3, remaining_lives):
+    embed = discord.Embed()
+    embed.title = f"Guess the meaning of this word"
+    embed.description = f"**`{word}`**"
+    embed.set_author(name="", icon_url="")
+    embed.set_footer(text=f"Remaining Lives: {remaining_lives}", icon_url="")
+    embed.set_image(url="")
+    embed.add_field(name="Options:", value=f"1️⃣ {descr1}\n2️⃣ {descr2}\n3️⃣ {descr3}", inline=False)
+    embed.color = 0xFF5733
+
+    return embed
