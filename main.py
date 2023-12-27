@@ -11,7 +11,7 @@ from database import TOKEN
 intents = discord.Intents.all()
 intents.members = True
 intents.messages = True
-bot = commands.Bot(command_prefix='$', intents=intents, description="LingoBot")
+bot = commands.Bot(command_prefix='$', case_insensitive=True, intents=intents, description="LingoBot")
 
 # Configure the logger
 logging.basicConfig(level=logging.ERROR, filename='bot_errors.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
