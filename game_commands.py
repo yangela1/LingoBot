@@ -1,8 +1,11 @@
+import asyncio
+
 import discord
 import requests
 import logging
 import random
 
+from discord.ui import Button, View
 from discord.ext import commands
 from database import userCollection
 
@@ -32,15 +35,12 @@ async def new_game(ctx):
 
     lives, coins = get_lives_and_coins(user_id)
 
-    embed = interactive_embed(question["word"], question["def_options"]["option1"], question["def_options"]["option2"],
+    embed, view = interactive_embed(question["word"], question["def_options"]["option1"], question["def_options"]["option2"],
                               question["def_options"]["option3"], lives, coins)
 
     print(question)
 
-
-    # logic to check answer
-
-    await ctx.send(embed=embed)
+    await ctx.send(embed=embed, view=view)
 
 
 # function to return a randomly generated word using vercel api
@@ -84,8 +84,8 @@ def get_def(word):
         first_phrase = phrases[0].strip()
 
         result = first_phrase.lower().rstrip(';.')
-        print(first_definition)
-        print(result)
+        # print(first_definition)
+        # print(result)
         print(f"successfully requested word definition")
         return result
 
@@ -156,14 +156,6 @@ def generate_question():
     return None
 
 
-# function that checks correct answer
-def check_answer(question, selected_index):
-    if selected_index == question["correct_index"]:
-        return True
-    else:
-        return False
-
-
 # function to store new word into words_learned dictionary in users collection !!!!!!!!!!!!!!!!!!!!!!!!CHANGE THIS AFTER I IMPLEMENT GAME LOGIC
 def store_word_users(users_collection, user_id, language, word):
     id_filter = {"id": user_id}
@@ -202,7 +194,35 @@ def interactive_embed(word, descr1, descr2, descr3, remaining_lives, coin_avail)
     embed.set_author(name="", icon_url="") # SET AUTHOR TO THE PERSON WHO TRIGGERED COMMAND
     embed.set_footer(text=f"LingoCoins: {coin_avail}   Remaining Lives: {remaining_lives}", icon_url="")
     embed.set_image(url="")
-    embed.add_field(name="Options:", value=f"1️⃣ {descr1}\n2️⃣ {descr2}\n3️⃣ {descr3}", inline=False)
+    embed.add_field(name="Options:", value=f"1️⃣ {descr1}\n\n2️⃣ {descr2}\n\n3️⃣ {descr3}", inline=False)
     embed.color = 0xFF5733
 
-    return embed
+    # create a view and add a button
+    view = discord.ui.View()
+    button1 = discord.ui.Button(style=discord.ButtonStyle.secondary, emoji="1️⃣", custom_id="0")
+    button2 = discord.ui.Button(style=discord.ButtonStyle.secondary, emoji="2️⃣", custom_id="1")
+    button3 = discord.ui.Button(style=discord.ButtonStyle.secondary, emoji="3️⃣", custom_id="2")
+    view.add_item(button1)
+    view.add_item(button2)
+    view.add_item(button3)
+
+    return embed, view
+
+@bot.command()
+async def button(ctx):
+    button = Button(label="click me", style=discord.ButtonStyle.green)
+
+    async def button_callback(interaction):
+        await interaction.response.send_message("hi!")
+
+    button.callback = button_callback
+
+    view = View()
+    view.add_item(button)
+
+    await ctx.send("hi", view=view)
+
+
+
+
+

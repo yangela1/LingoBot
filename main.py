@@ -23,11 +23,12 @@ bot.remove_command('help')
 # register imported commands with the bot
 bot.add_command(game_commands.new_game)
 bot.add_command(game_commands.testing)
+bot.add_command(game_commands.button)
+
 bot.add_command(general_commands.commands)
 bot.add_command(general_commands.help_response)
 bot.add_command(general_commands.check)
 bot.add_command(general_commands.say_hello)
-
 
 
 # this is called when bot is ready to start being used
