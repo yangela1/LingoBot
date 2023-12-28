@@ -2,6 +2,7 @@ import discord
 import logging
 
 from discord.ext import commands
+
 import game_commands
 import general_commands
 from database import userCollection
@@ -22,8 +23,6 @@ bot.remove_command('help')
 
 # register imported commands with the bot
 bot.add_command(game_commands.new_game)
-bot.add_command(game_commands.testing)
-bot.add_command(game_commands.button)
 
 bot.add_command(general_commands.commands)
 bot.add_command(general_commands.help_response)
@@ -94,6 +93,7 @@ def register_user(uid, name, guildid, guildname):
     else:
         print("failed to insert user data")
         logger.error(f"error inserting user data: {name} {uid}")
+
 
 
 bot.run(TOKEN)

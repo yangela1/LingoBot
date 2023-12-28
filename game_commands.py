@@ -5,9 +5,10 @@ import requests
 import logging
 import random
 
-from discord.ui import Button, View
+from discord.ui import Button
 from discord.ext import commands
 from database import userCollection
+from MyView import MyView
 
 # Configure the logger
 logging.basicConfig(level=logging.ERROR, filename='bot_errors.log', filemode='a', format='%(asctime)s - %(name)s - '
@@ -36,11 +37,13 @@ async def new_game(ctx):
     lives, coins = get_lives_and_coins(user_id)
 
     embed, view = interactive_embed(question["word"], question["def_options"]["option1"], question["def_options"]["option2"],
-                              question["def_options"]["option3"], lives, coins)
+                              question["def_options"]["option3"], lives, coins, correct_index)
 
     print(question)
 
-    await ctx.send(embed=embed, view=view)
+    message = await ctx.send(embed=embed, view=view)
+
+    view.message = message
 
 
 # function to return a randomly generated word using vercel api
@@ -155,8 +158,7 @@ def generate_question():
     logger.error("Could not generate question")
     return None
 
-
-# function to store new word into words_learned dictionary in users collection !!!!!!!!!!!!!!!!!!!!!!!!CHANGE THIS AFTER I IMPLEMENT GAME LOGIC
+# function to store new word into words_learned dictionary in !CHANGE THIS AFTER I IMPLEMENT GAME LOGIC
 def store_word_users(users_collection, user_id, language, word):
     id_filter = {"id": user_id}
 
@@ -172,22 +174,8 @@ def store_word_users(users_collection, user_id, language, word):
             print(f"Failed to add the word '{word}' to the user's words_learned in {language}.")
 
 
-@bot.command(name="test")
-async def testing(ctx):
-    question = "hindered"
-    descr1 = "xasdasdasdasdas"
-    descr2 = "fasdjaskdjkajsd"
-    descr3 = "asldjaksdjasd"
-    lives = 3
-    coins = 2
-    embed = interactive_embed(question, descr1, descr2, descr3, lives, coins)
-
-    # send embed with buttons
-    await ctx.send(embed=embed)
-
-
 # function to show question
-def interactive_embed(word, descr1, descr2, descr3, remaining_lives, coin_avail):
+def interactive_embed(word, descr1, descr2, descr3, remaining_lives, coin_avail, correct_index):
     embed = discord.Embed()
     embed.title = f"Guess the meaning of this word"
     embed.description = f"**`{word}`**"
@@ -197,32 +185,6 @@ def interactive_embed(word, descr1, descr2, descr3, remaining_lives, coin_avail)
     embed.add_field(name="Options:", value=f"1️⃣ {descr1}\n\n2️⃣ {descr2}\n\n3️⃣ {descr3}", inline=False)
     embed.color = 0xFF5733
 
-    # create a view and add a button
-    view = discord.ui.View()
-    button1 = discord.ui.Button(style=discord.ButtonStyle.secondary, emoji="1️⃣", custom_id="0")
-    button2 = discord.ui.Button(style=discord.ButtonStyle.secondary, emoji="2️⃣", custom_id="1")
-    button3 = discord.ui.Button(style=discord.ButtonStyle.secondary, emoji="3️⃣", custom_id="2")
-    view.add_item(button1)
-    view.add_item(button2)
-    view.add_item(button3)
+    view = MyView(correct_index)
 
     return embed, view
-
-@bot.command()
-async def button(ctx):
-    button = Button(label="click me", style=discord.ButtonStyle.green)
-
-    async def button_callback(interaction):
-        await interaction.response.send_message("hi!")
-
-    button.callback = button_callback
-
-    view = View()
-    view.add_item(button)
-
-    await ctx.send("hi", view=view)
-
-
-
-
-
