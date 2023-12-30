@@ -11,8 +11,9 @@ from database import userCollection
 from MyView import MyView
 
 # Configure the logger
-logging.basicConfig(level=logging.ERROR, filename='bot_errors.log', filemode='a', format='%(asctime)s - %(name)s - '
-                                                                                         '%(levelname)s - %(message)s')
+logging.basicConfig(level=logging.ERROR, filename='bot_errors.log', filemode='a',
+                    format='%(asctime)s - %(name)s - ''%(levelname)s - %(message)s')
+
 logger = logging.getLogger('my_bot')
 
 # api endpoints
@@ -50,6 +51,14 @@ async def new_game(ctx):
     if res:
         print("timeout")
 
+    # update database
+    if view.value == "Correct":
+        print("correct")
+    elif view.value == "Incorrect":
+        print("incorrect")
+    else:
+        print("No guess ")
+
 
 # function to return a randomly generated word using vercel api
 def get_random_words():
@@ -60,6 +69,12 @@ def get_random_words():
         data = random_word_response.json()  # grab the random words
         print(f"generated words: {data}")
         words.extend(data)
+
+        # Log the generated words
+        with open("words.txt", 'a', encoding='utf-8') as file:
+            file.write('\n' + ','.join(words) + '\n')
+        logger.error(f"generated words: {data}")
+
         return words
     except requests.exceptions.RequestException as e:
         logger.error(f"An error occurred while fetching random words: {e}")
@@ -84,17 +99,18 @@ def get_def(word):
         first_definition = meanings[0]["definitions"][0]["definition"]
 
         # split the definitions by sentences
-        sentences = first_definition.split('.')
-        first_sentence = sentences[0].strip()
+        # sentences = first_definition.split('.')
+        # first_sentence = sentences[0].strip()
 
         # split the sentence by phrases to only obtain the first phrase
-        phrases = first_sentence.split(';')
+        phrases = first_definition.split(';')
         first_phrase = phrases[0].strip()
 
         result = first_phrase.lower().rstrip(';.')
         # print(first_definition)
         # print(result)
-        print(f"successfully requested word definition")
+        # print(f"successfully requested word definition")
+
         return result
 
     except requests.exceptions.RequestException as e:
@@ -140,6 +156,10 @@ def generate_question():
         definitions = [def_in_question, other_def1, other_def2]
 
         if all(definition is not None for definition in definitions):
+            # Log the generated definitions
+            with open("words.txt", 'a', encoding='utf-8') as file:
+                file.write('\n'.join(definitions) + '\n')
+
             random.shuffle(definitions)
 
             correct_index = definitions.index(def_in_question)
@@ -193,3 +213,15 @@ def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, coin_a
     view = MyView(ctx, correct_index)
 
     return embed, view
+
+
+@bot.command(name="def")
+# online
+async def test_definition(ctx, *, word):
+    # Use the provided word to fetch and print its definition
+    definition = get_def(word)
+
+    if definition:
+        await ctx.send(f"Definition of `{word}`: {definition}")
+    else:
+        await ctx.send(f"Unable to retrieve the definition for `{word}`.")

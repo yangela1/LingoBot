@@ -5,7 +5,6 @@ from discord.ext import commands
 
 import game_commands
 import general_commands
-from MyView import MyView
 from database import userCollection
 from database import TOKEN
 
@@ -17,6 +16,7 @@ bot = commands.Bot(command_prefix='$', case_insensitive=True, intents=intents, d
 
 # Configure the logger
 logging.basicConfig(level=logging.ERROR, filename='bot_errors.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
 logger = logging.getLogger('my_bot')
 
 # remove default help command
@@ -24,6 +24,7 @@ bot.remove_command('help')
 
 # register imported commands with the bot
 bot.add_command(game_commands.new_game)
+bot.add_command(game_commands.test_definition)
 
 bot.add_command(general_commands.commands)
 bot.add_command(general_commands.help_response)
