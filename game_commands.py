@@ -36,7 +36,7 @@ async def new_game(ctx):
 
     lives, coins = get_lives_and_coins(user_id)
 
-    embed, view = interactive_embed(question["word"], question["def_options"]["option1"], question["def_options"]["option2"],
+    embed, view = interactive_embed(ctx, question["word"], question["def_options"]["option1"], question["def_options"]["option2"],
                               question["def_options"]["option3"], lives, coins, correct_index)
 
     print(question)
@@ -44,6 +44,11 @@ async def new_game(ctx):
     message = await ctx.send(embed=embed, view=view)
 
     view.message = message
+
+    res = await view.wait()  # wait for view to stop by timeout or manually stopping
+
+    if res:
+        print("timeout")
 
 
 # function to return a randomly generated word using vercel api
@@ -175,7 +180,7 @@ def store_word_users(users_collection, user_id, language, word):
 
 
 # function to show question
-def interactive_embed(word, descr1, descr2, descr3, remaining_lives, coin_avail, correct_index):
+def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, coin_avail, correct_index):
     embed = discord.Embed()
     embed.title = f"Guess the meaning of this word"
     embed.description = f"**`{word}`**"
@@ -185,6 +190,6 @@ def interactive_embed(word, descr1, descr2, descr3, remaining_lives, coin_avail,
     embed.add_field(name="Options:", value=f"1️⃣ {descr1}\n\n2️⃣ {descr2}\n\n3️⃣ {descr3}", inline=False)
     embed.color = 0xFF5733
 
-    view = MyView(correct_index)
+    view = MyView(ctx, correct_index)
 
     return embed, view

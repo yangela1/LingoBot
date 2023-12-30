@@ -5,6 +5,7 @@ from discord.ext import commands
 
 import game_commands
 import general_commands
+from MyView import MyView
 from database import userCollection
 from database import TOKEN
 
@@ -93,7 +94,6 @@ def register_user(uid, name, guildid, guildname):
     else:
         print("failed to insert user data")
         logger.error(f"error inserting user data: {name} {uid}")
-
 
 
 bot.run(TOKEN)
