@@ -32,16 +32,22 @@ bot = commands.Bot(command_prefix='$', intents=intents)
 async def new_game(ctx):
     user_id = ctx.author.id
 
+    # check if user has 1 or more lives
+    lives, coins = get_lives_and_coins(user_id)
+
+    if lives < 1:
+        await ctx.send(f"{ctx.author}, you have no more lives to play today.")
+        return
+
     question = generate_question()
 
     word = question["word"]
     correct_index = question["def_options"]["correct_index"]
     corDef = question["def_options"][f"option{correct_index + 1}"]
     # print(f"cordef {corDef}")
-    lives, coins = get_lives_and_coins(user_id)
 
     embed, view = interactive_embed(ctx, word, question["def_options"]["option1"], question["def_options"]["option2"],
-                              question["def_options"]["option3"], lives, coins, correct_index)
+                                    question["def_options"]["option3"], lives, coins, correct_index)
 
     print(question)
 
