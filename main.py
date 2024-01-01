@@ -8,6 +8,7 @@ import general_commands
 from database import userCollection
 from database import TOKEN
 
+
 # create bot
 intents = discord.Intents.all()
 intents.members = True
@@ -24,9 +25,8 @@ bot.remove_command('help')
 
 # register imported commands with the bot
 bot.add_command(game_commands.new_game)
-bot.add_command(game_commands.test_definition)
+bot.add_command(game_commands.get_word_definition)
 
-bot.add_command(general_commands.commands)
 bot.add_command(general_commands.help_response)
 bot.add_command(general_commands.check)
 bot.add_command(general_commands.say_hello)
@@ -96,5 +96,12 @@ def register_user(uid, name, guildid, guildname):
         print("failed to insert user data")
         logger.error(f"error inserting user data: {name} {uid}")
 
+
+# list of commands
+@bot.command(name='commands')
+async def commands(ctx):
+    # List all available commands
+    command_list = [command.name for command in bot.commands]
+    await ctx.send(f"Available commands: {', '.join(command_list)}")
 
 bot.run(TOKEN)

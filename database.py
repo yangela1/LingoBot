@@ -27,6 +27,7 @@ except Exception as e:
 # access collection user
 db = mongoClient[DATABASE]
 userCollection = db["users"]
+wordCollection = db["words"]
 
 # Check if the token was loaded successfully
 if not TOKEN:

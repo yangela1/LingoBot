@@ -5,9 +5,9 @@ import requests
 import logging
 import random
 
-from discord.ui import Button
 from discord.ext import commands
 from database import userCollection
+from database import wordCollection
 from MyView import MyView
 
 # Configure the logger
@@ -33,11 +33,14 @@ async def new_game(ctx):
     user_id = ctx.author.id
 
     question = generate_question()
-    correct_index = question["def_options"]["correct_index"]
 
+    word = question["word"]
+    correct_index = question["def_options"]["correct_index"]
+    corDef = question["def_options"][f"option{correct_index + 1}"]
+    # print(f"cordef {corDef}")
     lives, coins = get_lives_and_coins(user_id)
 
-    embed, view = interactive_embed(ctx, question["word"], question["def_options"]["option1"], question["def_options"]["option2"],
+    embed, view = interactive_embed(ctx, word, question["def_options"]["option1"], question["def_options"]["option2"],
                               question["def_options"]["option3"], lives, coins, correct_index)
 
     print(question)
@@ -51,10 +54,13 @@ async def new_game(ctx):
     if res:
         print("timeout")
 
-    # update database
-    if view.value == "Correct":
+    # update words collection with word + def
+    store_word_def(wordCollection, word, corDef)
+
+    # update user collection if necessary
+    if view.correct_or_not:
         print("correct")
-    elif view.value == "Incorrect":
+    elif not view.correct_or_not:
         print("incorrect")
     else:
         print("No guess ")
@@ -183,21 +189,6 @@ def generate_question():
     logger.error("Could not generate question")
     return None
 
-# function to store new word into words_learned dictionary in !CHANGE THIS AFTER I IMPLEMENT GAME LOGIC
-def store_word_users(users_collection, user_id, language, word):
-    id_filter = {"id": user_id}
-
-    if language in users_collection.find_one(id_filter).get("words_learned", []):
-        print(f"{language} is a valid language that the user set")
-        update_query = {"$push": {f"words_learned.{language}": word}}
-
-        # attempt to update user's doc
-        result = users_collection.update_one(id_filter, update_query)
-        if result.acknowledged:
-            print(f"Successfully added the word '{word}' to the user's words_learned in {language}.")
-        else:
-            print(f"Failed to add the word '{word}' to the user's words_learned in {language}.")
-
 
 # function to show question
 def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, coin_avail, correct_index):
@@ -216,8 +207,8 @@ def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, coin_a
 
 
 @bot.command(name="def")
-# online
-async def test_definition(ctx, *, word):
+# function that returns a definition
+async def get_word_definition(ctx, *, word):
     # Use the provided word to fetch and print its definition
     definition = get_def(word)
 
@@ -225,3 +216,43 @@ async def test_definition(ctx, *, word):
         await ctx.send(f"Definition of `{word}`: {definition}")
     else:
         await ctx.send(f"Unable to retrieve the definition for `{word}`.")
+
+
+# function to store new word into words_learned dictionary in !CHANGE THIS AFTER I IMPLEMENT GAME LOGIC
+def store_word_users(users_collection, user_id, language, word):
+    id_filter = {"id": user_id}
+
+    if language in users_collection.find_one(id_filter).get("words_learned", []):
+        print(f"{language} is a valid language that the user set")
+        update_query = {"$push": {f"words_learned.{language}": word}}
+
+        # attempt to update user's doc
+        result = users_collection.update_one(id_filter, update_query)
+        if result.acknowledged:
+            print(f"Successfully added the word '{word}' to the user's words_learned in {language}.")
+        else:
+            print(f"Failed to add the word '{word}' to the user's words_learned in {language}.")
+
+
+# function that stores the word and definition into the Word collection
+def store_word_def(words_collection, word, definition, translation=None):
+    # check if document with given word exists
+    existing_word = words_collection.find_one({"word": word})
+
+    if existing_word is None:
+        # attempt to create a new word doc
+        new_word_def_data = {
+            "word": word,
+            "definition": definition,
+            "translation": translation
+        }
+
+        # insert new word into the collection
+        result = words_collection.insert_one(new_word_def_data)
+        print(result)
+
+        if result.acknowledged:
+            print(f"successfully inserted {word} added with ID: {result.inserted_id} into words collection")
+        else:
+            print("failed to insert word into dictionary")
+            logger.error(f"error inserting word data: {word} {definition}")

@@ -13,15 +13,7 @@ logger = logging.getLogger('my_bot')
 intents = discord.Intents.all()
 intents.members = True
 intents.messages = True
-bot = commands.Bot(command_prefix='$', intents=intents)
-
-
-# list of commands
-@bot.command(name='commands')
-async def commands(ctx):
-    # List all available commands
-    command_list = [command.name for command in bot.commands]
-    await ctx.send(f"Available commands: {', '.join(command_list)}")
+bot = commands.Bot(command_prefix='$', case_insensitive=True, intents=intents, description="LingoBot")
 
 
 # help
@@ -30,7 +22,7 @@ bot.remove_command('help')
 
 @bot.command(name='help')
 async def help_response(ctx):
-    help_dm = f"How to use {bot.user.name}\n" \
+    help_dm = f"How to use LingoBot\n" \
               f"Commands used:\n" \
 
 
@@ -42,7 +34,7 @@ async def help_response(ctx):
 
 
 # say hello
-@bot.command(name='hello')
+@bot.command(name='hello', description="say hello to the bot")
 async def say_hello(ctx):
     response = f'Hello, {ctx.author.mention}!'
     print('said hello')
