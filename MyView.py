@@ -30,14 +30,14 @@ class MyView(discord.ui.View):
             print("correct button clicked")
             self.disable_buttons()
             await interaction.response.edit_message(view=self)
-            await interaction.followup.send("Correct! :D")
+            await interaction.followup.send("Correct!\n+1 coin")
             self.correct_or_not = True
             self.stop()
         else:
             print("wrong button clicked")
             self.disable_buttons()
             await interaction.response.edit_message(view=self)
-            await interaction.followup.send(f"Wrong :( the correct answer is {button_emoji}.")
+            await interaction.followup.send(f"Wrong :( the correct answer is {button_emoji}")
             self.correct_or_not = False
             self.stop()
 

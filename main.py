@@ -73,6 +73,7 @@ def register_user(uid, name, guildid, guildname):
         "guild_id": guildid,
         "hearts": 3,
         "coins": 0,
+        "chal_coins": 0,
         "words_learned": {
             "English": [],
             "Spanish": [],

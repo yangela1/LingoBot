@@ -59,11 +59,25 @@ async def new_game(ctx):
 
     # update user collection if necessary
     if view.correct_or_not:
-        print("correct")
+        print("correct answer guessed, update to db in progress")
+        # get + 1 coin
+        increment(userCollection, user_id, "coins", 1)
+
+        # increment number of correct guesses + 1
+        increment(userCollection, user_id, "correct_guess", 1)
+
+        # store the learnt word
+        store_word_users(userCollection, user_id, "English", word)
     elif not view.correct_or_not:
-        print("incorrect")
-    else:
-        print("No guess ")
+        print("incorrect answer guessed, update to db in progress")
+        # decrement heart - 1
+        increment(userCollection, user_id, "hearts", -1)
+
+        # increment number of incorrect guesses + 1
+        increment(userCollection, user_id, "incorrect_guess", 1)
+
+        # store the incorrect word
+        store_wrong_word_user(userCollection, user_id, word)
 
 
 # function to return a randomly generated word using vercel api
@@ -218,20 +232,44 @@ async def get_word_definition(ctx, *, word):
         await ctx.send(f"Unable to retrieve the definition for `{word}`.")
 
 
-# function to store new word into words_learned dictionary in !CHANGE THIS AFTER I IMPLEMENT GAME LOGIC
+# function that stores word into user collection
 def store_word_users(users_collection, user_id, language, word):
-    id_filter = {"id": user_id}
+    id_filter = {"discord_id": user_id}
 
-    if language in users_collection.find_one(id_filter).get("words_learned", []):
-        print(f"{language} is a valid language that the user set")
-        update_query = {"$push": {f"words_learned.{language}": word}}
+    update_query = {
+        "$push": {
+            f"words_learned.{language}": word
+        }
+    }
 
-        # attempt to update user's doc
-        result = users_collection.update_one(id_filter, update_query)
-        if result.acknowledged:
-            print(f"Successfully added the word '{word}' to the user's words_learned in {language}.")
-        else:
-            print(f"Failed to add the word '{word}' to the user's words_learned in {language}.")
+    # attempt to update user's doc
+    result = users_collection.update_one(id_filter, update_query)
+
+    if result.modified_count > 0:
+        print(f"Successfully added the word '{word}' to the user's words_learned in {language}.")
+    else:
+        print(f"Failed to add the word '{word}' to the user's words_learned in {language}.")
+        logger.error(f"Failed to add the word '{word}' to the user's words_learned in {language}.")
+
+
+# function that stores word into users collection
+def store_wrong_word_user(users_collection, user_id, word):
+    id_filter = {"discord_id": user_id}
+
+    update_query = {
+        "$push": {
+            f"wrong_words": word
+        }
+    }
+
+    # attempt to update user's doc
+    result = users_collection.update_one(id_filter, update_query)
+
+    if result.modified_count > 0:
+        print(f"Successfully added the word '{word}' to the user's wrong_words.")
+    else:
+        print(f"Failed to add the word '{word}' to the user's wrong_words.")
+        logger.error(f"Failed to add the word '{word}' to the user's wrong_words.")
 
 
 # function that stores the word and definition into the Word collection
@@ -249,10 +287,30 @@ def store_word_def(words_collection, word, definition, translation=None):
 
         # insert new word into the collection
         result = words_collection.insert_one(new_word_def_data)
-        print(result)
+        # print(result)
 
         if result.acknowledged:
-            print(f"successfully inserted {word} added with ID: {result.inserted_id} into words collection")
+            print(f"successfully inserted {word} into words collection")
         else:
             print("failed to insert word into dictionary")
             logger.error(f"error inserting word data: {word} {definition}")
+
+
+# function that increments coins, guesses, and hearts for a user
+def increment(users_collection, user_id, field, amount):
+    id_filter = {"discord_id": user_id}
+
+    # $inc operator in MongoDB is used to increment value of a field
+    update_query = {
+        "$inc": {
+            field: amount
+        }
+    }
+
+    result = users_collection.update_one(id_filter, update_query)
+
+    if result.modified_count > 0:
+        print(f"{field} incremented by {amount} for user {user_id}")
+    else:
+        print(f"user {user_id} not found, could not increment {field}")
+        logger.error(f"error incrementing {field} for user {user_id}")
