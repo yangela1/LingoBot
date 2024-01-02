@@ -31,6 +31,8 @@ bot.add_command(general_commands.help_response)
 bot.add_command(general_commands.check)
 bot.add_command(general_commands.say_hello)
 bot.add_command(general_commands.view_stat)
+bot.add_command(general_commands.view_profile)
+
 
 # this is called when bot is ready to start being used
 @bot.event

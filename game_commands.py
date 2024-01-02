@@ -215,7 +215,7 @@ def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, coin_a
     embed = discord.Embed()
     embed.title = f"Guess the meaning of this word"
     embed.description = f"**`{word}`**"
-    embed.set_author(name="", icon_url="") # SET AUTHOR TO THE PERSON WHO TRIGGERED COMMAND
+    embed.set_author(name="", icon_url="")
     embed.set_footer(text=f"LingoCoins: {coin_avail}   Remaining Lives: {remaining_lives}", icon_url="")
     embed.set_image(url="")
     embed.add_field(name="Options:", value=f"1️⃣ {descr1}\n\n2️⃣ {descr2}\n\n3️⃣ {descr3}", inline=False)
