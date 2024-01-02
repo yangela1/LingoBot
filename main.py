@@ -30,7 +30,7 @@ bot.add_command(game_commands.get_word_definition)
 bot.add_command(general_commands.help_response)
 bot.add_command(general_commands.check)
 bot.add_command(general_commands.say_hello)
-
+bot.add_command(general_commands.view_stat)
 
 # this is called when bot is ready to start being used
 @bot.event

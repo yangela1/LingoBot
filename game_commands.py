@@ -63,7 +63,7 @@ async def new_game(ctx):
     # update words collection with word + def
     store_word_def(wordCollection, word, corDef)
 
-    # update user collection if necessary
+    # update user collection
     if view.correct_or_not:
         print("correct answer guessed, update to db in progress")
         # get + 1 coin
