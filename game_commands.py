@@ -33,10 +33,10 @@ async def new_game(ctx):
     user_id = ctx.author.id
 
     # check if user has 1 or more lives
-    lives, coins = get_lives_and_coins(user_id)
+    silver, gold, lives = get_lives_and_coins(user_id)
 
     if lives < 1:
-        await ctx.send(f"{ctx.author}, you have no more lives to play today.")
+        await ctx.send(f"{ctx.author}, you have no more lives to play right now.")
         return
 
     question = generate_question()
@@ -47,7 +47,7 @@ async def new_game(ctx):
     # print(f"cordef {corDef}")
 
     embed, view = interactive_embed(ctx, word, question["def_options"]["option1"], question["def_options"]["option2"],
-                                    question["def_options"]["option3"], lives, coins, correct_index)
+                                    question["def_options"]["option3"], lives, silver, gold, correct_index)
 
     print(question)
 
@@ -157,11 +157,15 @@ def get_def(word):
 
 # function that returns user's lives and coins
 def get_lives_and_coins(user_id):
-    user = userCollection.find_one({"discord_id": user_id})
+    id_filter = {"discord_id": user_id}
 
-    lives = user.get("hearts", None)
-    coins = user.get("coins", None)
-    return lives, coins
+    # attempt to get user's data
+    result = userCollection.find_one(id_filter)
+
+    silver = result.get("coins", None)
+    gold = result.get("chal_coins", None)
+    lives = result.get("hearts", None)
+    return silver, gold, lives
 
 
 # function to create questions
@@ -192,7 +196,7 @@ def generate_question():
 
             # question structure
             question = {
-                "word" : word_in_question,
+                "word": word_in_question,
                 "def_options": {
                     "option1": definitions[0],
                     "option2": definitions[1],
@@ -211,14 +215,15 @@ def generate_question():
 
 
 # function to show question
-def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, coin_avail, correct_index):
+def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, silver, gold, correct_index):
     embed = discord.Embed()
     embed.title = f"Guess the meaning of this word"
     embed.description = f"**`{word}`**"
     embed.set_author(name="", icon_url="")
-    embed.set_footer(text=f"LingoCoins: {coin_avail}   Remaining Lives: {remaining_lives}", icon_url="")
     embed.set_image(url="")
     embed.add_field(name="Options:", value=f"1️⃣ {descr1}\n\n2️⃣ {descr2}\n\n3️⃣ {descr3}", inline=False)
+    embed.add_field(name="", value=f"Kiwis: {silver} <:silver:1191744440113569833> {gold} <:gold:1191744402222223432>\n"
+                                   f"Remaining lives: {remaining_lives}")
     embed.color = 0xFF5733
 
     view = MyView(ctx, correct_index)

@@ -3,9 +3,11 @@ import discord
 
 from discord.ext import commands
 from database import userCollection
+from game_commands import get_lives_and_coins
 
 # Configure the logger
-logging.basicConfig(level=logging.ERROR, filename='bot_errors.log', filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.ERROR, filename='bot_errors.log', filemode='a',
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 logger = logging.getLogger('my_bot')
 
@@ -15,7 +17,6 @@ intents.members = True
 intents.messages = True
 bot = commands.Bot(command_prefix='$', case_insensitive=True, intents=intents, description="LingoBot")
 
-
 # help
 bot.remove_command('help')
 
@@ -24,7 +25,6 @@ bot.remove_command('help')
 async def help_response(ctx):
     help_dm = f"How to use LingoBot\n" \
               f"Commands used:\n" \
-
 
     try:
         await ctx.author.send(help_dm)
@@ -77,19 +77,6 @@ def check_stat(user_id):
     return total, formatted_percentage, challenges
 
 
-# function that returns silver and gold coins
-def check_coins_lives(user_id):
-    id_filter = {"discord_id": user_id}
-
-    # attempt to get user's data
-    result = userCollection.find_one(id_filter)
-
-    silver = result.get("coins", None)
-    gold = result.get("chal_coins", None)
-    lives = result.get("hearts", None)
-    return silver, gold, lives
-
-
 # function that returns number of words learned in each language
 def check_words_learned(user_id):
     id_filter = {"discord_id": user_id}
@@ -123,7 +110,7 @@ async def view_stat(ctx):
 async def view_profile(ctx):
     user_id = ctx.author.id
     total, percentage, challenges = check_stat(user_id)
-    silver, gold, lives = check_coins_lives(user_id)
+    silver, gold, lives = get_lives_and_coins(user_id)
     word_count = check_words_learned(user_id)
     embed = profile_embed(ctx, lives, silver, gold, total, percentage, challenges, word_count)
 
@@ -136,9 +123,9 @@ def stat_embed(ctx, total, percentage, challenges):
     embed.title = f"Stats"
     embed.description = f""
     embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
-    embed.add_field(name="\u200B", value=f"**Total plays**: {total}", inline=False)
-    embed.add_field(name="", value=f"**Correct guesses**: {percentage}", inline=False)
-    embed.add_field(name="", value=f"**Challenges complete**: {challenges}", inline=False)
+    embed.add_field(name="\u200B", value=f"**Total plays**: {total}\n"
+                                   f"**Correct guesses**: {percentage}\n"
+                                   f"**Challenges complete**: {challenges}", inline=False)
     embed.color = 0x800080
 
     return embed
@@ -151,11 +138,11 @@ def profile_embed(ctx, lives, silver, gold, total, percentage, challenges, langu
     embed.description = ""
     embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
     embed.add_field(name="\u200B", value=f"**Lives**: {lives}", inline=False)
-    embed.add_field(name="", value=silver, inline=True)
-    embed.add_field(name="", value=gold, inline=True)
-    embed.add_field(name="\u200B", value=f"**Total plays**: {total}", inline=False)
-    embed.add_field(name="", value=f"**Correct guesses**: {percentage}", inline=False)
-    embed.add_field(name="", value=f"**Challenges complete**: {challenges}", inline=False)
+    embed.add_field(name="Kiwis:", value=f"**{silver}** <:silver:1191744440113569833>  "
+                                         f"**{gold}** <:gold:1191744402222223432>", inline=False)
+    embed.add_field(name="\u200B", value=f"**Total plays**: {total}\n"
+                                         f"**Correct guesses**: {percentage}\n"
+                                         f"**Challenges complete**: {challenges}", inline=False)
     embed.color = 0x77DD77
 
     # show language and word count if > 0
