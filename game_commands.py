@@ -236,10 +236,16 @@ def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, silver
 @bot.command(name="def")
 # function that returns a definition
 async def get_word_definition(ctx, *, args):
+    error_message = "Invalid input. Use `$def <word>` to get the definition."
+    # Check if the user provided any arguments
+    if not args.strip():
+        await ctx.send(error_message)
+        return
+
     words = args.split()
 
     if len(words) != 1:
-        await ctx.send("Provide only one word to get the definition.")
+        await ctx.send(error_message)
         return
 
     # Use the provided word to fetch and print its definition
@@ -247,7 +253,7 @@ async def get_word_definition(ctx, *, args):
 
     # Check if the word contains only alphabetical characters using reg expressions
     if not re.match("^[a-zA-Z]+$", word):
-        await ctx.send("Invalid input. Provide a word to get the definition.")
+        await ctx.send(error_message)
         return
 
     definition = get_def(word)
@@ -259,8 +265,13 @@ async def get_word_definition(ctx, *, args):
 
 
 @bot.command(name="gamble")
-async def gamble_coin(ctx, *, input_str: str):
-    kiwi_message = f"Invalid input. Enter a single positive number to start gambling."
+async def gamble_coin(ctx, *, input_str: str = ""):
+    kiwi_message = f"Invalid input. Use `$gamble <positive number>` to start gambling."
+
+    # Check if input_str is empty or consists only of whitespace
+    if not input_str.strip():
+        await ctx.send(kiwi_message)
+        return
 
     # Split the input string into words
     words = input_str.split()
