@@ -3,7 +3,7 @@ import discord
 
 class MyView(discord.ui.View):
     def __init__(self, ctx, correct_index):
-        super().__init__(timeout=15)
+        super().__init__(timeout=25)
         self.ctx = ctx
         self.correct_index = correct_index
         self.buttons_disabled = False
@@ -30,14 +30,16 @@ class MyView(discord.ui.View):
             print("correct button clicked")
             self.disable_buttons()
             await interaction.response.edit_message(view=self)
-            await interaction.followup.send("Correct!\n+1 coin")
+            await interaction.followup.send(f"Correct!\n"
+                                            f"**{self.ctx.author.name}** +1 <:silver:1191744440113569833>")
             self.correct_or_not = True
             self.stop()
         else:
             print("wrong button clicked")
             self.disable_buttons()
             await interaction.response.edit_message(view=self)
-            await interaction.followup.send(f"Incorrect :( the correct answer is {button_emoji}\n-1 heart")
+            await interaction.followup.send(f"Incorrect :( the correct answer is {button_emoji}\n"
+                                            f"**{self.ctx.author.name}** -1 heart")
             self.correct_or_not = False
             self.stop()
 

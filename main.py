@@ -26,6 +26,7 @@ bot.remove_command('help')
 # register imported commands with the bot
 bot.add_command(game_commands.new_game)
 bot.add_command(game_commands.get_word_definition)
+bot.add_command(game_commands.gamble_coin)
 
 bot.add_command(general_commands.help_response)
 bot.add_command(general_commands.check)

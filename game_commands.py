@@ -1,4 +1,5 @@
 import asyncio
+import re
 
 import discord
 import requests
@@ -222,8 +223,9 @@ def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, silver
     embed.set_author(name="", icon_url="")
     embed.set_image(url="")
     embed.add_field(name="Options:", value=f"1️⃣ {descr1}\n\n2️⃣ {descr2}\n\n3️⃣ {descr3}", inline=False)
-    embed.add_field(name="", value=f"Kiwis: {silver} <:silver:1191744440113569833> {gold} <:gold:1191744402222223432>\n"
-                                   f"Remaining lives: {remaining_lives}")
+    embed.add_field(name="", value=f"Kiwis: {silver} <:silver:1191744440113569833>"
+                                   # f" {gold} <:gold:1191744402222223432>"
+                                   f"\nLives: {remaining_lives}")
     embed.color = 0xFF5733
 
     view = MyView(ctx, correct_index)
@@ -233,14 +235,88 @@ def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, silver
 
 @bot.command(name="def")
 # function that returns a definition
-async def get_word_definition(ctx, *, word):
+async def get_word_definition(ctx, *, args):
+    words = args.split()
+
+    if len(words) != 1:
+        await ctx.send("Provide only one word to get the definition.")
+        return
+
     # Use the provided word to fetch and print its definition
+    word = words[0]
+
+    # Check if the word contains only alphabetical characters using reg expressions
+    if not re.match("^[a-zA-Z]+$", word):
+        await ctx.send("Invalid input. Provide a word to get the definition.")
+        return
+
     definition = get_def(word)
 
     if definition:
         await ctx.send(f"Definition of `{word}`: {definition}")
     else:
-        await ctx.send(f"Unable to retrieve the definition for `{word}`.")
+        await ctx.send(f"Kiwi is confused and was unable to retrieve the definition for `{word}`.")
+
+
+@bot.command(name="gamble")
+async def gamble_coin(ctx, *, input_str: str):
+    kiwi_message = f"Invalid input. Enter a single positive number to start gambling."
+
+    # Split the input string into words
+    words = input_str.split()
+
+    # Check if there are more than one word in the input
+    if len(words) > 1:
+        await ctx.send(kiwi_message)
+        return
+
+    # check to see if input has only digits
+    if not words[0].isdigit():
+        await ctx.send(kiwi_message)
+        return
+
+    amount = int(words[0])
+
+    user_id = ctx.author.id
+    # get silvers from db
+    silver, gold, lives = get_lives_and_coins(user_id)
+
+    # they want to gamble more than they have
+    if amount > silver:
+        await ctx.send(f"You only have {silver} <:silver:1191744440113569833> to gamble.")
+        return
+
+    # they aren't gambling anything
+    if amount == 0:
+        await ctx.send(kiwi_message)
+        return
+
+    try:
+        # generate random number between 0 to 2 times the input amount
+        random_int = random.randint(0, amount * 2)
+        result = random_int - amount
+        print(f"random int = {random_int}, result = {result}")
+
+        # make changes to database with resulting number
+        increment(userCollection, user_id, "coins", result)
+
+        # get silvers from db
+        silver, gold, lives = get_lives_and_coins(user_id)
+
+        string = f"You have {silver} <:silver:1191744440113569833>."
+
+        if result > 0:
+            await ctx.send(f"Congrats! You won +{result} <:silver:1191744440113569833>.\n{string}")
+        elif result == 0:
+            await ctx.send(f"You did not win or lose any <:silver:1191744440113569833>.\n{string}")
+        else:
+            await ctx.send(f"Bad luck! You lost -{abs(result)} <:silver:1191744440113569833>.\n{string}")
+    except ValueError as ve:
+        print(f"Invalid input: {ve}")
+        await ctx.send(kiwi_message)
+    except Exception as e:
+        print(f"Error updating database: {e}")
+        await ctx.send("Sorry, slots machine broke. Try again!")
 
 
 # function that stores word into user collection
@@ -318,10 +394,16 @@ def increment(users_collection, user_id, field, amount):
         }
     }
 
-    result = users_collection.update_one(id_filter, update_query)
+    try:
+        result = users_collection.update_one(id_filter, update_query)
 
-    if result.modified_count > 0:
+        if result.matched_count == 0:
+            print(f"user {user_id} not found, could not increment {field}")
+            logger.error(f"Error incrementing {field} for user {user_id}")
+            raise ValueError(f"User {user_id} not found")
+
         print(f"{field} incremented by {amount} for user {user_id}")
-    else:
-        print(f"user {user_id} not found, could not increment {field}")
-        logger.error(f"error incrementing {field} for user {user_id}")
+    except Exception as e:
+        print(f"Error updating database: {e}")
+        logger.error(f"Error updating database: {e}")
+        raise

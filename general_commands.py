@@ -99,22 +99,30 @@ def check_words_learned(user_id):
 
 @bot.command(name="stat")
 async def view_stat(ctx):
-    user_id = ctx.author.id
-    total, percentage, challenges = check_stat(user_id)
-    embed = stat_embed(ctx, total, percentage, challenges)
+    try:
+        user_id = ctx.author.id
+        total, percentage, challenges = check_stat(user_id)
+        embed = stat_embed(ctx, total, percentage, challenges)
 
-    await ctx.send(embed=embed)
+        await ctx.send(embed=embed)
+    except Exception as e:
+        error_message = f"An error occurred: {str(e)}"
+        logger.error(error_message)
 
 
 @bot.command(name="profile")
 async def view_profile(ctx):
-    user_id = ctx.author.id
-    total, percentage, challenges = check_stat(user_id)
-    silver, gold, lives = get_lives_and_coins(user_id)
-    word_count = check_words_learned(user_id)
-    embed = profile_embed(ctx, lives, silver, gold, total, percentage, challenges, word_count)
+    try:
+        user_id = ctx.author.id
+        total, percentage, challenges = check_stat(user_id)
+        silver, gold, lives = get_lives_and_coins(user_id)
+        word_count = check_words_learned(user_id)
+        embed = profile_embed(ctx, lives, silver, gold, total, percentage, challenges, word_count)
 
-    await ctx.send(embed=embed)
+        await ctx.send(embed=embed)
+    except Exception as e:
+        error_message = f"An error occurred: {str(e)}"
+        logger.error(error_message)
 
 
 # function that returns the embed for stats
