@@ -4,6 +4,8 @@ import discord
 from discord.ext import commands
 from database import userCollection
 from game_commands import get_lives_and_coins
+from embeds import stat_embed
+from embeds import profile_embed
 
 # Configure the logger
 logging.basicConfig(level=logging.ERROR, filename='bot_errors.log', filemode='a',
@@ -123,40 +125,3 @@ async def view_profile(ctx):
     except Exception as e:
         error_message = f"An error occurred: {str(e)}"
         logger.error(error_message)
-
-
-# function that returns the embed for stats
-def stat_embed(ctx, total, percentage, challenges):
-    embed = discord.Embed()
-    embed.title = f"Stats"
-    embed.description = f""
-    embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
-    embed.add_field(name="\u200B", value=f"**Total plays**: {total}\n"
-                                   f"**Correct guesses**: {percentage}\n"
-                                   f"**Challenges complete**: {challenges}", inline=False)
-    embed.color = 0x800080
-
-    return embed
-
-
-# function that returns the embed for user profile
-def profile_embed(ctx, lives, silver, gold, total, percentage, challenges, languages):
-    embed = discord.Embed()
-    embed.title = f""
-    embed.description = ""
-    embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
-    embed.add_field(name="\u200B", value=f"**Lives**: {lives}", inline=False)
-    embed.add_field(name="Kiwis:", value=f"**{silver}** <:silver:1191744440113569833>  "
-                                         f"**{gold}** <:gold:1191744402222223432>", inline=False)
-    embed.add_field(name="\u200B", value=f"**Total plays**: {total}\n"
-                                         f"**Correct guesses**: {percentage}\n"
-                                         f"**Challenges complete**: {challenges}", inline=False)
-    embed.color = 0x77DD77
-
-    # show language and word count if > 0
-    for language, num_words in languages.items():
-        if num_words > 0:
-            field_value = f"**{language} words**: {num_words}"
-            embed.add_field(name="\u200B", value=field_value, inline=False)
-
-    return embed

@@ -1,5 +1,5 @@
-import asyncio
 import re
+import os
 
 import discord
 import requests
@@ -9,7 +9,7 @@ import random
 from discord.ext import commands
 from database import userCollection
 from database import wordCollection
-from MyView import MyView
+from embeds import interactive_embed
 
 # Configure the logger
 logging.basicConfig(level=logging.ERROR, filename='bot_errors.log', filemode='a',
@@ -19,7 +19,7 @@ logger = logging.getLogger('my_bot')
 
 # api endpoints
 random_word_url = "https://random-word-api.vercel.app/api?words=3"
-definition_url = "https://api.dictionaryapi.dev/api/v2/entries/en/"
+words_api_url = "https://wordsapiv1.p.rapidapi.com/words/"
 
 # create bot
 intents = discord.Intents.all()
@@ -27,35 +27,54 @@ intents.members = True
 intents.messages = True
 bot = commands.Bot(command_prefix='$', intents=intents)
 
+# global variables
+current_word = None
+current_view = None
+
+# headers
+headers = {
+    "X-RapidAPI-Key": os.getenv("X_RAPIDAPIKEY"),
+    "X-RapidAPI-Host": os.getenv("X_RAPIDHOST")
+}
+
 
 # play the game
 @bot.command(name="play")
 async def new_game(ctx):
+    # check if a game is already in session
+    global current_view
+
+    if current_view and not current_view.stopped:
+        await ctx.send("A game is already in process. Finish the current game.")
+        return
+
     user_id = ctx.author.id
 
     # check if user has 1 or more lives
     silver, gold, lives = get_lives_and_coins(user_id)
 
     if lives < 1:
-        await ctx.send(f"{ctx.author}, you have no more lives to play right now.")
+        await ctx.send(f"**{ctx.author}**, you have no more lives to play right now.")
         return
 
     question = generate_question()
+    word = question["word"]  # current game word
 
-    word = question["word"]
+    global current_word
+    current_word = word     # set global word
+
     correct_index = question["def_options"]["correct_index"]
     corDef = question["def_options"][f"option{correct_index + 1}"]
     # print(f"cordef {corDef}")
 
     embed, view = interactive_embed(ctx, word, question["def_options"]["option1"], question["def_options"]["option2"],
                                     question["def_options"]["option3"], lives, silver, gold, correct_index)
-
     print(question)
 
+    current_view = view     # set global view
+
     message = await ctx.send(embed=embed, view=view)
-
     view.message = message
-
     res = await view.wait()  # wait for view to stop by timeout or manually stopping
 
     if res:
@@ -113,33 +132,19 @@ def get_random_words():
 
 # function to get the definition of the word using dictionary api
 def get_def(word):
-    word_url = definition_url + word
+    api_url = f"{words_api_url}{word}/definitions"
 
     try:
-        definition_response = requests.get(url=word_url)
+        definition_response = requests.get(url=api_url, headers=headers)
         definition_response.raise_for_status()  # grab http error code
         data = definition_response.json()
 
         # access definitions
-        meanings = data[0]["meanings"]
+        meanings = data["definitions"]
 
-        first_definition = meanings[0]["definitions"][0]["definition"]
-
-        # split the definitions by sentences
-        # sentences = first_definition.split('.')
-        # first_sentence = sentences[0].strip()
-
-        # split the sentence by phrases to only obtain the first phrase
-        phrases = first_definition.split(';')
-        first_phrase = phrases[0].strip()
-
-        result = first_phrase.lower().rstrip(';.')
+        first_definition = meanings[0]["definition"]
         # print(first_definition)
-        # print(result)
-        # print(f"successfully requested word definition")
-
-        return result
-
+        return first_definition
     except requests.exceptions.RequestException as e:
         print("unable to request word def")
         logger.error(f"Definition request exception: {e} \nError: Unable to fetch definition for '{word}'")
@@ -154,6 +159,42 @@ def get_def(word):
         print("unable to request word def")
         logging.error(f"An unexpected error occurred: {e} \nError: An unexpected error occurred for '{word}'")
         return None
+
+
+# function that gets the synonym of the word
+def get_syn():
+    global current_word
+
+    api_url = f"{words_api_url}{current_word}/synonyms"
+
+    try:
+        response = requests.get(url=api_url, headers=headers)
+        response.raise_for_status()  # grab http error code
+        data = response.json()["synonyms"]
+
+        synonym = random.choice(data)
+        return synonym
+    except Exception as e:
+        # Handle other unexpected errors
+        print("unable to request word synonym")
+        logging.error(f"An unexpected error occurred: {e} Synonym for {current_word} cannot be fetched.")
+        return None
+
+
+@bot.command(name="hint")
+async def get_hint(ctx):
+    print(f"{ctx.author.name} used a hint")
+    global current_view
+
+    # check if a game is in progress
+    if current_word is None or current_view is None or current_view.stopped:
+        await ctx.send("You need to start a game first. Use the `$play` command.")
+        return
+
+    # provide user with a hint
+    synonym = get_syn()
+    if synonym:
+        await ctx.send(synonym)
 
 
 # function that returns user's lives and coins
@@ -213,24 +254,6 @@ def generate_question():
     print("could not generate question")
     logger.error("Could not generate question")
     return None
-
-
-# function to show question
-def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, silver, gold, correct_index):
-    embed = discord.Embed()
-    embed.title = f"Guess the meaning of this word"
-    embed.description = f"**`{word}`**"
-    embed.set_author(name="", icon_url="")
-    embed.set_image(url="")
-    embed.add_field(name="Options:", value=f"1️⃣ {descr1}\n\n2️⃣ {descr2}\n\n3️⃣ {descr3}", inline=False)
-    embed.add_field(name="", value=f"Kiwis: {silver} <:silver:1191744440113569833>"
-                                   # f" {gold} <:gold:1191744402222223432>"
-                                   f"\nLives: {remaining_lives}")
-    embed.color = 0xFF5733
-
-    view = MyView(ctx, correct_index)
-
-    return embed, view
 
 
 @bot.command(name="def")
@@ -418,3 +441,4 @@ def increment(users_collection, user_id, field, amount):
         print(f"Error updating database: {e}")
         logger.error(f"Error updating database: {e}")
         raise
+
