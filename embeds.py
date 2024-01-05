@@ -3,19 +3,24 @@ from MyView import MyView
 
 
 # function to show question
-def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, silver, gold, correct_index):
+def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, silver, gold, correct_index, challenge, language=None):
     embed = discord.Embed()
-    embed.title = f"Guess the meaning of this word"
-    embed.description = f"**`{word}`**"
+    if language:
+        embed.title = f"⚠️Guess the meaning of this word⚠️"
+        embed.description = f"**`{word}`** _({language})_"
+        embed.color = 0xd13636
+    else:
+        embed.title = "Guess the meaning of this word"
+        embed.description = f"**`{word}`**"
+        embed.color = 0xfffd78
     embed.set_author(name="", icon_url="")
     embed.set_image(url="")
     embed.add_field(name="Options:", value=f"1️⃣ {descr1}\n\n2️⃣ {descr2}\n\n3️⃣ {descr3}", inline=False)
     embed.add_field(name="", value=f"Kiwis: {silver} <:silver:1191744440113569833>"
                                    # f" {gold} <:gold:1191744402222223432>"
                                    f"\nLives: {remaining_lives}")
-    embed.color = 0xFF5733
 
-    view = MyView(ctx, correct_index)
+    view = MyView(ctx, correct_index, challenge)
 
     return embed, view
 
@@ -55,3 +60,10 @@ def profile_embed(ctx, lives, silver, gold, total, percentage, challenges, langu
             embed.add_field(name="\u200B", value=field_value, inline=False)
 
     return embed
+
+
+# function that returns the embed for hints
+def hint_embed(word_in_question, synonym):
+    embed = discord.Embed()
+    embed.title = f"The synonym for `{word_in_question} is `{synonym}`"
+    embed.color = 0xffbe24

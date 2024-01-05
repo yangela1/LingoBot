@@ -2,8 +2,8 @@ import discord
 
 
 class MyView(discord.ui.View):
-    def __init__(self, ctx, correct_index):
-        super().__init__(timeout=25)
+    def __init__(self, ctx, correct_index, challenge=False):
+        super().__init__(timeout=30)
         self.ctx = ctx
         self.correct_index = correct_index
         self.buttons_disabled = False
@@ -14,6 +14,7 @@ class MyView(discord.ui.View):
         }
         self.correct_or_not = None
         self.stopped = False
+        self.challenge = challenge
 
     # function that handles button clicks
     async def handle_button_click(self, interaction, button, button_id):
@@ -31,7 +32,8 @@ class MyView(discord.ui.View):
             self.disable_buttons()
             await interaction.response.edit_message(view=self)
             await interaction.followup.send(f"Correct!\n"
-                                            f"**{self.ctx.author.name}** +1 <:silver:1191744440113569833>")
+                                            f"**{self.ctx.author.name}** +{'3' if self.challenge else '1'} "
+                                            f"<:silver:1191744440113569833>")
             self.correct_or_not = True
             self.stop()
         else:

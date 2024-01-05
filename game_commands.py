@@ -20,6 +20,7 @@ logger = logging.getLogger('my_bot')
 # api endpoints
 random_word_url = "https://random-word-api.vercel.app/api?words=3"
 words_api_url = "https://wordsapiv1.p.rapidapi.com/words/"
+translate_url = "https://google-translate113.p.rapidapi.com/api/v1/translator/"
 
 # create bot
 intents = discord.Intents.all()
@@ -30,11 +31,26 @@ bot = commands.Bot(command_prefix='$', intents=intents)
 # global variables
 current_word = None
 current_view = None
+translated_word = None
+
+hard_languages = {
+    "Spanish": "es",
+    "French": "fr",
+    "German": "de",
+    "Italian": "it",
+    "Swedish": "sv"
+}
 
 # headers
-headers = {
+words_headers = {
     "X-RapidAPI-Key": os.getenv("X_RAPIDAPIKEY"),
-    "X-RapidAPI-Host": os.getenv("X_RAPIDHOST")
+    "X-RapidAPI-Host": os.getenv("X_RAPIDHOST_WORDS")
+}
+
+translate_headers = {
+    "X-RapidAPI-Key": os.getenv("X_RAPIDAPIKEY"),
+    "X-RapidAPI-Host": os.getenv("X_RAPIDHOST_TRANSLATE"),
+    "content-type": "application/x-www-form-urlencoded",
 }
 
 
@@ -68,7 +84,8 @@ async def new_game(ctx):
     # print(f"cordef {corDef}")
 
     embed, view = interactive_embed(ctx, word, question["def_options"]["option1"], question["def_options"]["option2"],
-                                    question["def_options"]["option3"], lives, silver, gold, correct_index)
+                                    question["def_options"]["option3"], lives, silver, gold, correct_index,
+                                    False)
     print(question)
 
     current_view = view     # set global view
@@ -106,6 +123,118 @@ async def new_game(ctx):
         store_wrong_word_user(userCollection, user_id, word)
 
 
+@bot.command(name="chal")
+async def new_challenge(ctx):
+    # check if a game is already in session
+    global current_view
+
+    if current_view and not current_view.stopped:
+        await ctx.send("A game is already in process. Finish the current game.")
+        return
+
+    user_id = ctx.author.id
+
+    # check if user has 1 or more lives
+    silver, gold, lives = get_lives_and_coins(user_id)
+
+    if lives < 1:
+        await ctx.send(f"**{ctx.author}**, you have no more lives to play right now.")
+        return
+
+    question = generate_question()
+    language, code = get_random_language()
+
+    word = question["word"]  # current game word
+
+    # put the word through translate api
+    translated_word1 = translate_word(word, code)
+    print(f"translated word `{word}` is `{translated_word1}`")
+
+    global current_word
+    current_word = word   # set global word
+
+    global translated_word
+    translated_word = translated_word1  # set global translated word
+
+    correct_index = question["def_options"]["correct_index"]
+    corDef = question["def_options"][f"option{correct_index + 1}"]
+    # print(f"cordef {corDef}")
+
+    embed, view = interactive_embed(ctx, translated_word, question["def_options"]["option1"],
+                                    question["def_options"]["option2"], question["def_options"]["option3"],
+                                    lives, silver, gold, correct_index, True, language)
+    print(question)
+
+    current_view = view  # set global view
+
+    message = await ctx.send(embed=embed, view=view)
+    view.message = message
+    res = await view.wait()  # wait for view to stop by timeout or manually stopping
+
+    if res:
+        print("timeout")
+
+    # update words collection with word + def
+
+
+# function that chooses a random hard mode language
+def get_random_language():
+    result = random.choice(list(hard_languages.items()))
+    key, value = result
+    print(f"random language: {key} {value}")
+    return key, value
+
+
+# function that returns the code to use in Google Translate api
+def get_code(language):
+    api_url = translate_url + "support-languages"
+    try:
+        response = requests.get(url=api_url, headers=translate_headers)
+        response.raise_for_status()
+        data = response.json()
+        target_code = None
+        for entry in data:
+            if entry["language"] == language:
+                target_code = entry["code"]
+                break
+
+        if target_code is not None:
+            print(f"the code for {language} is: {target_code}")
+        else:
+            print(f"could not find target code for {language}")
+            logger.error(f"could not find target code for {language}")
+
+        return target_code
+    except Exception as e:
+        print(f"An error occurred while fetching target code for {language}")
+        logger.error(f"An error occurred while fetching target code for {language} {e}")
+        return None
+
+
+# function that returns the translated word
+def translate_word(word, code):
+    api_url = f"{translate_url}text"
+
+    payload = {
+        "from": "en",
+        "to": code,
+        "text": word
+    }
+
+    try:
+        response = requests.post(url=api_url, data=payload, headers=translate_headers)
+        response.raise_for_status()
+        data = response.json()
+        # print(data)
+        translation = data["trans"]
+        # print(f"translation of {word} is {translation}")
+        return translation.lower()
+    except Exception as e:
+        print(f"An error occurred while translating the word '{word}' into code '{code}'")
+        logger.error(f"An error occurred while translating the word {word}, code {code} {e}")
+        return None
+
+
 # function to return a randomly generated word using vercel api
 def get_random_words():
     try:
@@ -135,7 +264,7 @@ def get_def(word):
     api_url = f"{words_api_url}{word}/definitions"
 
     try:
-        definition_response = requests.get(url=api_url, headers=headers)
+        definition_response = requests.get(url=api_url, headers=words_headers)
         definition_response.raise_for_status()  # grab http error code
         data = definition_response.json()
 
@@ -168,7 +297,7 @@ def get_syn():
     api_url = f"{words_api_url}{current_word}/synonyms"
 
     try:
-        response = requests.get(url=api_url, headers=headers)
+        response = requests.get(url=api_url, headers=words_headers)
         response.raise_for_status()  # grab http error code
         data = response.json()["synonyms"]
 
@@ -191,10 +320,16 @@ async def get_hint(ctx):
         await ctx.send("You need to start a game first. Use the `$play` command.")
         return
 
+    # determine which word to display based on game mode
+    word_to_display = translated_word if current_view.challenge else current_word
+
     # provide user with a hint
     synonym = get_syn()
     if synonym:
-        await ctx.send(synonym)
+        await ctx.send(f"Hint: A synonym for `{word_to_display}` is `{synonym}`.\n"
+                       f"**{ctx.author.name}** -1 <:silver:1191744440113569833>")
+    else:
+        await ctx.send(f"Sorry! Kiwi is unable to provide a hint at this time.")
 
 
 # function that returns user's lives and coins
