@@ -3,11 +3,12 @@ from MyView import MyView
 
 
 # function to show question
-def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, silver, gold, correct_index, challenge, language=None):
+def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, silver, gold, correct_index, challenge,
+                      language=None, translation=None):
     embed = discord.Embed()
     if language:
-        embed.title = f"⚠️Guess the meaning of this word⚠️"
-        embed.description = f"**`{word}`** _({language})_"
+        embed.title = f"Guess the meaning of this word"
+        embed.description = f"**`{translation}`** _({language})_"
         embed.color = 0xd13636
     else:
         embed.title = "Guess the meaning of this word"
@@ -17,10 +18,10 @@ def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, silver
     embed.set_image(url="")
     embed.add_field(name="Options:", value=f"1️⃣ {descr1}\n\n2️⃣ {descr2}\n\n3️⃣ {descr3}", inline=False)
     embed.add_field(name="", value=f"Kiwis: {silver} <:silver:1191744440113569833>"
-                                   # f" {gold} <:gold:1191744402222223432>"
+    # f" {gold} <:gold:1191744402222223432>"
                                    f"\nLives: {remaining_lives}")
 
-    view = MyView(ctx, correct_index, challenge)
+    view = MyView(ctx, correct_index, challenge, word, translation)
 
     return embed, view
 
@@ -32,8 +33,8 @@ def stat_embed(ctx, total, percentage, challenges):
     embed.description = f""
     embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
     embed.add_field(name="\u200B", value=f"**Total plays**: {total}\n"
-                                   f"**Correct guesses**: {percentage}\n"
-                                   f"**Challenges complete**: {challenges}", inline=False)
+                                         f"**Correct guesses**: {percentage}\n"
+                                         f"**Challenges complete**: {challenges}", inline=False)
     embed.color = 0x800080
 
     return embed
@@ -57,7 +58,7 @@ def profile_embed(ctx, lives, silver, gold, total, percentage, challenges, langu
     for language, num_words in languages.items():
         if num_words > 0:
             field_value = f"**{language} words**: {num_words}"
-            embed.add_field(name="\u200B", value=field_value, inline=False)
+            embed.add_field(name="", value=field_value, inline=False)
 
     return embed
 

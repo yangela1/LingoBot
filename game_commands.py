@@ -10,6 +10,7 @@ from discord.ext import commands
 from database import userCollection
 from database import wordCollection
 from embeds import interactive_embed
+from GameConstants import GameConstants
 
 # Configure the logger
 logging.basicConfig(level=logging.ERROR, filename='bot_errors.log', filemode='a',
@@ -31,7 +32,8 @@ bot = commands.Bot(command_prefix='$', intents=intents)
 # global variables
 current_word = None
 current_view = None
-translated_word = None
+current_translated_word = None
+game_starter = None
 
 hard_languages = {
     "Spanish": "es",
@@ -58,7 +60,8 @@ translate_headers = {
 @bot.command(name="play")
 async def new_game(ctx):
     # check if a game is already in session
-    global current_view
+    global current_view, game_starter
+    game_starter = ctx.author.id
 
     if current_view and not current_view.stopped:
         await ctx.send("A game is already in process. Finish the current game.")
@@ -103,8 +106,8 @@ async def new_game(ctx):
     # update user collection
     if view.correct_or_not:
         print("correct answer guessed, update to db in progress")
-        # get + 1 coin
-        increment(userCollection, user_id, "coins", 1)
+        # get + silvers
+        increment(userCollection, user_id, "coins", GameConstants.PLAY_W_SILVER)
 
         # increment number of correct guesses + 1
         increment(userCollection, user_id, "correct_guess", 1)
@@ -126,7 +129,8 @@ async def new_game(ctx):
 @bot.command(name="chal")
 async def new_challenge(ctx):
     # check if a game is already in session
-    global current_view
+    global current_view, game_starter
+    game_starter = ctx.author.id
 
     if current_view and not current_view.stopped:
         await ctx.send("A game is already in process. Finish the current game.")
@@ -142,27 +146,29 @@ async def new_challenge(ctx):
         return
 
     question = generate_question()
+
+    # grab a random language to translate the word into
     language, code = get_random_language()
 
     word = question["word"]  # current game word
 
     # put the word through translate api
-    translated_word1 = translate_word(word, code)
-    print(f"translated word `{word}` is `{translated_word1}`")
+    translation = translate_word(word, code)
+    print(f"translated word `{word}` is `{translation}`")
 
     global current_word
     current_word = word   # set global word
 
-    global translated_word
-    translated_word = translated_word1  # set global translated word
+    global current_translated_word
+    current_translated_word = translation  # set global translated word
 
     correct_index = question["def_options"]["correct_index"]
     corDef = question["def_options"][f"option{correct_index + 1}"]
     # print(f"cordef {corDef}")
 
-    embed, view = interactive_embed(ctx, translated_word, question["def_options"]["option1"],
+    embed, view = interactive_embed(ctx, current_word, question["def_options"]["option1"],
                                     question["def_options"]["option2"], question["def_options"]["option3"],
-                                    lives, silver, gold, correct_index, True, language)
+                                    lives, silver, gold, correct_index, True, language, current_translated_word)
     print(question)
 
     current_view = view  # set global view
@@ -174,7 +180,36 @@ async def new_challenge(ctx):
     if res:
         print("timeout")
 
-    # update words collection with word + def
+    # update words collection with word + def + translation
+    store_word_def(wordCollection, word, corDef, language, translation)
+
+    # update user collection
+    if view.correct_or_not:
+        print("correct answer guessed, update to db in progress")
+        # get + silvers
+        increment(userCollection, user_id, "coins", GameConstants.CHAL_W_SILVER)
+
+        # get + gold
+        increment(userCollection, user_id, "chal_coins", GameConstants.CHAL_W_GOLD)
+
+        # increment number of correct guesses + 1
+        increment(userCollection, user_id, "correct_guess", 1)
+
+        # increment number of challenge complete + 1
+        increment(userCollection, user_id, "chal_complete", 1)
+
+        # store the learnt word
+        store_word_users(userCollection, user_id, language, translation)
+    elif not view.correct_or_not:
+        print("incorrect answer guessed, update to db in progress")
+        # decrement heart - 1
+        increment(userCollection, user_id, "hearts", -1)
+
+        # increment number of incorrect guesses + 1
+        increment(userCollection, user_id, "incorrect_guess", 1)
+
+        # store the incorrect word
+        store_wrong_word_user(userCollection, user_id, translation)
 
 
 # function that chooses a random hard mode language
@@ -313,7 +348,12 @@ def get_syn():
 @bot.command(name="hint")
 async def get_hint(ctx):
     print(f"{ctx.author.name} used a hint")
-    global current_view
+    global current_view, game_starter
+
+    # check if user running command is the same user who started the game
+    if ctx.author.id != game_starter:
+        await ctx.send("You can only use hints if you started the game.")
+        return
 
     # check if a game is in progress
     if current_word is None or current_view is None or current_view.stopped:
@@ -321,13 +361,14 @@ async def get_hint(ctx):
         return
 
     # determine which word to display based on game mode
-    word_to_display = translated_word if current_view.challenge else current_word
+    word_to_display = current_translated_word if current_view.challenge else current_word
 
     # provide user with a hint
     synonym = get_syn()
     if synonym:
-        await ctx.send(f"Hint: A synonym for `{word_to_display}` is `{synonym}`.\n"
-                       f"**{ctx.author.name}** -1 <:silver:1191744440113569833>")
+        await ctx.send(f"Hint: A synonym for `{word_to_display}` in English is `{synonym}`.\n"
+                       f"**{ctx.author.name}** -{GameConstants.CHAL_HINT_SILVERCOST if current_view.challenge else GameConstants.PLAY_HINT_SILVERCOST} "
+                       f"<:silver:1191744440113569833>")
     else:
         await ctx.send(f"Sorry! Kiwi is unable to provide a hint at this time.")
 
@@ -529,7 +570,7 @@ def store_wrong_word_user(users_collection, user_id, word):
 
 
 # function that stores the word and definition into the Word collection
-def store_word_def(words_collection, word, definition, translation=None):
+def store_word_def(words_collection, word, definition, language=None, translation=None):
     # check if document with given word exists
     existing_word = words_collection.find_one({"word": word})
 
@@ -538,8 +579,10 @@ def store_word_def(words_collection, word, definition, translation=None):
         new_word_def_data = {
             "word": word,
             "definition": definition,
-            "translation": translation
         }
+
+        if translation is not None:
+            new_word_def_data[language] = translation
 
         # insert new word into the collection
         result = words_collection.insert_one(new_word_def_data)
