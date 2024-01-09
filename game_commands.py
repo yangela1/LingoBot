@@ -1,3 +1,4 @@
+import asyncio
 import re
 import os
 
@@ -357,7 +358,7 @@ async def get_hint(ctx):
 
     # check if a game is in progress
     if current_word is None or current_view is None or current_view.stopped:
-        await ctx.send("You need to start a game first. Use the `$play` command.")
+        await ctx.send("You need to start a game first. Use `$play` or `$chal`.")
         return
 
     # determine which word to display based on game mode
@@ -619,4 +620,33 @@ def increment(users_collection, user_id, field, amount):
         print(f"Error updating database: {e}")
         logger.error(f"Error updating database: {e}")
         raise
+
+
+@bot.command(name="buylife")
+async def buy_life_command(ctx):
+    user_id = ctx.author.id
+
+    # get gold and lives from database
+    silver, gold, lives = get_lives_and_coins(user_id)
+
+    if lives >= GameConstants.MAX_LIVES:
+        await ctx.send("You have max lives already. Purchase cancelled.")
+        return
+
+    if gold < GameConstants.HEART_GOLDCOST:
+        await ctx.send(f"You do not have enough gold. "
+                 f"A life costs {GameConstants.HEART_GOLDCOST} <:gold:1191744402222223432>. Purchase cancelled.")
+        return
+
+    # decrement gold
+    increment(userCollection, user_id,"chal_coins", -GameConstants.HEART_GOLDCOST)
+
+    # increment life
+    increment(userCollection, user_id, "hearts", 1)
+
+    await ctx.send(f"Purchase successful!\n"
+                   f"**{ctx.author.name}** -{GameConstants.HEART_GOLDCOST} <:gold:1191744402222223432>, "
+                   f"+1 life")
+
+
 

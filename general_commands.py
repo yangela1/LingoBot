@@ -91,10 +91,9 @@ def check_words_learned(user_id):
     word_count = {}
 
     for language, words in words_learned.items():
-        if words:
-            num_words = len(words)
-            word_count[language] = num_words
-            print(f"{language}: {num_words} words learned")
+        num_words = len(words)
+        word_count[language] = num_words
+        print(f"{language}: {num_words} words learned")
 
     return word_count
 

@@ -39,7 +39,7 @@ class MyView(discord.ui.View):
                                             f"{chal_message if self.challenge else ''}"
                                             f"**{self.ctx.author.name}** +{GameConstants.CHAL_W_SILVER if self.challenge else GameConstants.PLAY_W_SILVER} "
                                             f"<:silver:1191744440113569833>"
-                                            f"{', +' + str(GameConstants.CHAL_W_GOLD) + '<:gold:1191744402222223432>' if self.challenge else ''}")
+                                            f"{', +' + str(GameConstants.CHAL_W_GOLD) + ' <:gold:1191744402222223432>' if self.challenge else ''}")
             self.correct_or_not = True
             self.stop()
         else:

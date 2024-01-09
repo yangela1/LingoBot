@@ -29,6 +29,7 @@ bot.add_command(game_commands.get_word_definition)
 bot.add_command(game_commands.gamble_coin)
 bot.add_command(game_commands.get_hint)
 bot.add_command(game_commands.new_challenge)
+bot.add_command(game_commands.buy_life_command)
 
 bot.add_command(general_commands.help_response)
 bot.add_command(general_commands.check)

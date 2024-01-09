@@ -55,10 +55,13 @@ def profile_embed(ctx, lives, silver, gold, total, percentage, challenges, langu
     embed.color = 0x77DD77
 
     # show language and word count if > 0
+    embed.add_field(name="\u200B", value="", inline=False)
+
+    field_value = ""
     for language, num_words in languages.items():
-        if num_words > 0:
-            field_value = f"**{language} words**: {num_words}"
-            embed.add_field(name="", value=field_value, inline=False)
+        field_value += f"{language}: {num_words}\n"
+
+    embed.add_field(name="Words per Language Mastery:\n", value=field_value, inline=False)
 
     return embed
 
