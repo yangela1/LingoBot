@@ -218,7 +218,6 @@ async def new_challenge(ctx):
         print("passed challenge")
 
 
-
 # function that chooses a random hard mode language
 def get_random_language():
     result = random.choice(list(hard_languages.items()))
@@ -354,7 +353,7 @@ def get_syn():
 
 @bot.command(name="hint")
 async def get_hint(ctx):
-    print(f"{ctx.author.name} used a hint")
+    print(f"{ctx.author.name} used a hint command")
     global current_view, game_starter
 
     # check if a game is in progress
@@ -367,6 +366,19 @@ async def get_hint(ctx):
         await ctx.send("You can only use hints if you started the game.")
         return
 
+    # check if user has enough coins
+    is_challenge = current_view.challenge
+
+    user_id = ctx.author.id
+    silver, gold, lives = get_lives_and_coins(user_id)
+
+    if is_challenge and silver < GameConstants.CHAL_HINT_SILVERCOST:
+        await ctx.send(f"You do not have enough coins. A challenge hint costs {GameConstants.CHAL_HINT_SILVERCOST} <:silver:1191744440113569833>.")
+        return
+    elif not is_challenge and silver < GameConstants.PLAY_HINT_SILVERCOST:
+        await ctx.send(f"You do not have enough coins. A play hint costs {GameConstants.PLAY_HINT_SILVERCOST} <:silver:1191744440113569833>.")
+        return
+
     # determine which word to display based on game mode
     word_to_display = current_translated_word if current_view.challenge else current_word
 
@@ -376,6 +388,10 @@ async def get_hint(ctx):
         await ctx.send(f"Hint: A synonym for `{word_to_display}` in English is `{synonym}`.\n"
                        f"**{ctx.author.name}** -{GameConstants.CHAL_HINT_SILVERCOST if current_view.challenge else GameConstants.PLAY_HINT_SILVERCOST} "
                        f"<:silver:1191744440113569833>")
+        if is_challenge:
+            increment(userCollection, user_id, "coins", -GameConstants.CHAL_HINT_SILVERCOST)
+        else:
+            increment(userCollection, user_id, "coins", -GameConstants.PLAY_HINT_SILVERCOST)
     else:
         await ctx.send(f"Sorry! Kiwi is unable to provide a hint at this time.")
 
