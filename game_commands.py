@@ -81,7 +81,7 @@ async def new_game(ctx):
     word = question["word"]  # current game word
 
     global current_word
-    current_word = word     # set global word
+    current_word = word  # set global word
 
     correct_index = question["def_options"]["correct_index"]
     corDef = question["def_options"][f"option{correct_index + 1}"]
@@ -92,7 +92,7 @@ async def new_game(ctx):
                                     False)
     print(question)
 
-    current_view = view     # set global view
+    current_view = view  # set global view
 
     message = await ctx.send(embed=embed, view=view)
     view.message = message
@@ -105,7 +105,7 @@ async def new_game(ctx):
     store_word_def(wordCollection, word, corDef)
 
     # update user collection
-    if view.correct_or_not:
+    if view.correct_or_not == 'Y':
         print("correct answer guessed, update to db in progress")
         # get + silvers
         increment(userCollection, user_id, "coins", GameConstants.PLAY_W_SILVER)
@@ -115,7 +115,7 @@ async def new_game(ctx):
 
         # store the learnt word
         store_word_users(userCollection, user_id, "English", word)
-    elif not view.correct_or_not:
+    elif view.correct_or_not == 'N':
         print("incorrect answer guessed, update to db in progress")
         # decrement heart - 1
         increment(userCollection, user_id, "hearts", -1)
@@ -125,6 +125,9 @@ async def new_game(ctx):
 
         # store the incorrect word
         store_wrong_word_user(userCollection, user_id, word)
+    elif view.correct_or_not == 'P':
+        print("passed word")
+        print(view.correct_or_not)
 
 
 @bot.command(name="chal")
@@ -158,7 +161,7 @@ async def new_challenge(ctx):
     print(f"translated word `{word}` is `{translation}`")
 
     global current_word
-    current_word = word   # set global word
+    current_word = word  # set global word
 
     global current_translated_word
     current_translated_word = translation  # set global translated word
@@ -185,7 +188,7 @@ async def new_challenge(ctx):
     store_word_def(wordCollection, word, corDef, language, translation)
 
     # update user collection
-    if view.correct_or_not:
+    if view.correct_or_not == 'Y':
         print("correct answer guessed, update to db in progress")
         # get + silvers
         increment(userCollection, user_id, "coins", GameConstants.CHAL_W_SILVER)
@@ -201,7 +204,7 @@ async def new_challenge(ctx):
 
         # store the learnt word
         store_word_users(userCollection, user_id, language, translation)
-    elif not view.correct_or_not:
+    elif view.correct_or_not == 'N':
         print("incorrect answer guessed, update to db in progress")
         # decrement heart - 1
         increment(userCollection, user_id, "hearts", -1)
@@ -211,6 +214,9 @@ async def new_challenge(ctx):
 
         # store the incorrect word
         store_wrong_word_user(userCollection, user_id, translation)
+    elif view.correct_or_not == 'P':
+        print("passed challenge")
+
 
 
 # function that chooses a random hard mode language
@@ -351,14 +357,14 @@ async def get_hint(ctx):
     print(f"{ctx.author.name} used a hint")
     global current_view, game_starter
 
-    # check if user running command is the same user who started the game
-    if ctx.author.id != game_starter:
-        await ctx.send("You can only use hints if you started the game.")
-        return
-
     # check if a game is in progress
     if current_word is None or current_view is None or current_view.stopped:
         await ctx.send("You need to start a game first. Use `$play` or `$chal`.")
+        return
+
+    # check if user running command is the same user who started the game
+    if ctx.author.id != game_starter:
+        await ctx.send("You can only use hints if you started the game.")
         return
 
     # determine which word to display based on game mode
@@ -635,11 +641,11 @@ async def buy_life_command(ctx):
 
     if gold < GameConstants.HEART_GOLDCOST:
         await ctx.send(f"You do not have enough gold. "
-                 f"A life costs {GameConstants.HEART_GOLDCOST} <:gold:1191744402222223432>. Purchase cancelled.")
+                       f"A life costs {GameConstants.HEART_GOLDCOST} <:gold:1191744402222223432>. Purchase cancelled.")
         return
 
     # decrement gold
-    increment(userCollection, user_id,"chal_coins", -GameConstants.HEART_GOLDCOST)
+    increment(userCollection, user_id, "chal_coins", -GameConstants.HEART_GOLDCOST)
 
     # increment life
     increment(userCollection, user_id, "hearts", 1)
@@ -649,4 +655,41 @@ async def buy_life_command(ctx):
                    f"+1 life")
 
 
+@bot.command(name="pass")
+async def pass_word_command(ctx):
+    user_id = ctx.author.id
 
+    print(f"{ctx.author.name} used a pass")
+    global current_view, game_starter
+
+    # check if a game is in progress
+    if current_word is None or current_view is None or current_view.stopped:
+        await ctx.send("You need to start a game first. Use `$play` or `$chal`.")
+        return
+
+    # check if user running command is the same user who started the game
+    if ctx.author.id != game_starter:
+        await ctx.send("You can only use a pass if you started the game.")
+        return
+
+    # get gold and lives from database
+    silver, gold, lives = get_lives_and_coins(user_id)
+
+    if silver >= 3:
+        increment(userCollection, user_id, "coins", -GameConstants.PASS_SILVERCOST)
+
+        # stop the current view
+        current_view.correct_or_not = 'P'
+        current_view.stop()
+
+        # send message
+        await ctx.send(f"Current word passed. Starting a new game...\n"
+                       f"**{ctx.author.name}** -{GameConstants.PASS_SILVERCOST} <:silver:1191744440113569833>")
+
+        if current_view.challenge:
+            await new_challenge(ctx)
+        else:
+            await new_game(ctx)
+    else:
+        await ctx.send(f"You do not have enough silver to use a pass. A pass costs {GameConstants.PASS_SILVERCOST}"
+                       f"<:silver:1191744440113569833>.")

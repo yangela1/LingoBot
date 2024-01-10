@@ -40,7 +40,7 @@ class MyView(discord.ui.View):
                                             f"**{self.ctx.author.name}** +{GameConstants.CHAL_W_SILVER if self.challenge else GameConstants.PLAY_W_SILVER} "
                                             f"<:silver:1191744440113569833>"
                                             f"{', +' + str(GameConstants.CHAL_W_GOLD) + ' <:gold:1191744402222223432>' if self.challenge else ''}")
-            self.correct_or_not = True
+            self.correct_or_not = "Y"
             self.stop()
         else:
             print("wrong button clicked")
@@ -49,7 +49,7 @@ class MyView(discord.ui.View):
             await interaction.followup.send(f"Incorrect :( the correct answer is {button_emoji}\n"
                                             f"{chal_message if self.challenge else ''}" 
                                             f"**{self.ctx.author.name}** -1 heart")
-            self.correct_or_not = False
+            self.correct_or_not = "N"
             self.stop()
 
     # function that triggers after timeout
