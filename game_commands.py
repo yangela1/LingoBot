@@ -462,7 +462,14 @@ async def get_word_definition(ctx, *, args):
         await ctx.send(error_message)
         return
 
-    definition = get_def(word)
+    # first check if the word definition is stored in the database before fetching
+    existing_word = wordCollection.find_one({"word": word})
+
+    if existing_word:
+        definition = existing_word.get("definition")
+        print(f"found in db. the definition of {word} is {definition}")
+    else:
+        definition = get_def(word)
 
     if definition:
         await ctx.send(f"Definition of `{word}`: {definition}")
