@@ -71,3 +71,37 @@ def hint_embed(word_in_question, synonym):
     embed = discord.Embed()
     embed.title = f"The synonym for `{word_in_question} is `{synonym}`"
     embed.color = 0xffbe24
+
+
+# function that returns the embed for leaderboard
+def leaderboard_embed(ctx, users_guesses, current_time):
+    embed = discord.Embed()
+    embed.title = f"🏆 Leaderboard 🏆"
+    embed.set_author(name=ctx.bot.user.name, icon_url=ctx.bot.user.avatar.url)
+    embed.add_field(name='\u0020', value="")
+
+    # enumerate over each item in dict starting at 1
+    for rank, (user, guesses) in enumerate(users_guesses.items(), start=1):
+        if rank == 1:
+            medal = "🥇"
+        elif rank == 2:
+            medal = "🥈"
+        elif rank == 3:
+            medal = "🥉"
+        else:
+            medal = ""
+
+        # bold the current user's rank on the leaderboard
+        if user == ctx.author.name:
+            user_text = f"**{user}**"
+        else:
+            user_text = user
+
+        embed.add_field(name="", value=f"#{rank} {medal} {user_text} Score: {guesses} ", inline=False)
+    embed.color = discord.Color.gold()
+
+    embed.add_field(name='\u0020', value="")
+
+    footer_text = f"Leaderboard updated at {current_time}."
+    embed.set_footer(text=footer_text)
+    return embed

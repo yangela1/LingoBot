@@ -1,11 +1,13 @@
 import logging
 import discord
+import datetime
 
 from discord.ext import commands
 from database import userCollection
 from game_commands import get_lives_and_coins
 from embeds import stat_embed
 from embeds import profile_embed
+from embeds import leaderboard_embed
 
 # Configure the logger
 logging.basicConfig(level=logging.ERROR, filename='bot_errors.log', filemode='a',
@@ -124,3 +126,26 @@ async def view_profile(ctx):
     except Exception as e:
         error_message = f"An error occurred: {str(e)}"
         logger.error(error_message)
+
+
+@bot.command(name="lead", help="Displays the leaderboard based on the number of correct guesses.")
+async def view_leaderboard(ctx):
+    # dictionary of name:num_correct_guesses
+    users = {}
+
+    # iterate through all users in collection and add to dictionary
+    for user in userCollection.find():
+        user_name = user["name"]
+        num_correct_guesses = user["correct_guess"]
+        users[user_name] = num_correct_guesses
+
+    # sort from high to low - based on the second element of each tuple  (item[1])
+    sorted_users = dict(sorted(users.items(), key=lambda item: item[1], reverse=True))
+    print(sorted_users)
+
+    current_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    embed = leaderboard_embed(ctx, sorted_users, current_date)
+    await ctx.send(embed=embed)
+
+
+
