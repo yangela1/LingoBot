@@ -133,8 +133,10 @@ async def view_leaderboard(ctx):
     # dictionary of name:num_correct_guesses
     users = {}
 
+    guild_id = ctx.guild.id
+
     # iterate through all users in collection and add to dictionary
-    for user in userCollection.find():
+    for user in userCollection.find({"guild_id": guild_id}):
         user_name = user["name"]
         num_correct_guesses = user["correct_guess"]
         users[user_name] = num_correct_guesses

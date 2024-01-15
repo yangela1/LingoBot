@@ -62,7 +62,9 @@ async def on_message(message):
         user_name = message.author.name
         user_guild_id = message.guild.id
         user_guild_name = message.guild
-        existing_user = userCollection.find_one({"discord_id": user_id})
+
+        # check if user is registered in the same guild
+        existing_user = userCollection.find_one({"discord_id": user_id, "guild_id": user_guild_id})
 
         if not existing_user:
             # if user is not reg, register them to database
@@ -112,5 +114,12 @@ async def commands(ctx):
     # List all available commands
     command_list = [command.name for command in bot.commands]
     await ctx.send(f"Available commands: {', '.join(command_list)}")
+
+
+# assign members special roles based on score
+@bot.event
+async def on_member_update(before, after):
+    pass
+
 
 bot.run(TOKEN)
