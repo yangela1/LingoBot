@@ -105,3 +105,16 @@ def leaderboard_embed(ctx, users_guesses, current_time):
     footer_text = f"Leaderboard updated at {current_time}."
     embed.set_footer(text=footer_text)
     return embed
+
+
+# function that returns the embed for WOTD
+def wotd_embed(ctx, word, definition, current_date):
+    embed = discord.Embed()
+    embed.title = f"📚 Word of the day ({current_date}) ✨"
+    embed.set_author(name=ctx.bot.user.name, icon_url=ctx.bot.user.avatar.url)
+    embed.add_field(name='\u0020', value="")
+    embed.add_field(name=f"`{word}`: {definition}", value="", inline=False)
+    embed.color = discord.Color.blurple()
+    embed.set_footer(text="Learn a new word every day with $wod!")
+    return embed
+

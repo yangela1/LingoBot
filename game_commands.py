@@ -12,6 +12,7 @@ from database import userCollection
 from database import wordCollection
 from database import wordOfTheDayCollection
 from embeds import interactive_embed
+from embeds import wotd_embed
 from GameConstants import GameConstants
 
 # Configure the logger
@@ -563,21 +564,34 @@ async def gamble_coin(ctx, *, input_str: str = ""):
 # function that stores word into user collection
 def store_word_users(users_collection, user_id, language, word):
     id_filter = {"discord_id": user_id}
+    existing_user = users_collection.find_one(id_filter)
 
-    update_query = {
-        "$push": {
-            f"words_learned.{language}": word
-        }
-    }
+    if existing_user:
+        # check if word already exists in database
+        words_learned = existing_user.get("words_learned", {}).get("English", [])
 
-    # attempt to update user's doc
-    result = users_collection.update_one(id_filter, update_query)
+        if word not in words_learned:
+            # word doesn't exist in user's dictionary, add it
 
-    if result.modified_count > 0:
-        print(f"Successfully added the word '{word}' to the user's words_learned in {language}.")
+            update_query = {
+                "$push": {
+                    f"words_learned.{language}": word
+                }
+            }
+
+            # attempt to update user's doc
+            result = users_collection.update_one(id_filter, update_query)
+
+            if result.modified_count > 0:
+                print(f"Successfully added the word '{word}' to the user's words_learned in {language}.")
+            else:
+                print(f"Failed to add the word '{word}' to the user's words_learned in {language}.")
+                logger.error(f"Failed to add the word '{word}' to the user's words_learned in {language}.")
+        else:
+            print(f"word already exists in user's dictionary, word: {word}")
     else:
-        print(f"Failed to add the word '{word}' to the user's words_learned in {language}.")
-        logger.error(f"Failed to add the word '{word}' to the user's words_learned in {language}.")
+        print(f"user {user_id} not found")
+        logger.error(f"user {user_id} not found while trying to store word in user's dictionary")
 
 
 # function that stores word into users collection
@@ -778,8 +792,28 @@ def store_word_of_the_day(word, definition, date):
         logger.error(f"error inserting word of the day: {word}")
 
 
+# function that grabs a new word, stores it into the WOD collection and word collection
+def update_word_of_the_day(current_date, user_id):
+    word, definition = generate_word_of_the_day()
+
+    # store the word into WOD collection
+    store_word_of_the_day(word, definition, current_date)
+
+    # store the word into word collection
+    store_word_def(wordCollection, word, definition)
+
+    # store the word into user's learned_words
+    store_word_users(userCollection, user_id, "English", word)
+
+    print(f"new word of the day! {word}")
+
+    return word, definition
+
+
 @bot.command(name="wod")
 async def word_of_the_day(ctx):
+    user_id = ctx.author.id
+
     # get current date
     current_date = datetime.datetime.now().strftime("%Y-%m-%d")
 
@@ -788,22 +822,28 @@ async def word_of_the_day(ctx):
 
     if existing_wod:
         stored_date_str = existing_wod["date"]
+        stored_word = existing_wod["word"]
+        stored_def = existing_wod["definition"]
 
         # check if one or more days has passed
         if stored_date_str != current_date:
-            word, definition = generate_word_of_the_day()
+            word, definition = update_word_of_the_day(current_date, user_id)
 
-            # store the word into WOD collection
-            store_word_of_the_day(word, definition, current_date)
-
-            # store the word into word collection
-            store_word_def(wordCollection, word, definition)
-
-            print(f"new word of the day! {word}")
+            embed = wotd_embed(ctx, word, definition, current_date)
+            await ctx.send(embed=embed)
         else:
             print(f"a day has not passed since last entry for WOD")
+
+            # store the current WOD into user's learned words
+            store_word_users(userCollection, user_id, "English", stored_word)
+
+            embed = wotd_embed(ctx, stored_word, stored_def, stored_date_str)
+            await ctx.send(embed=embed)
     else:
-        print("no existing wod entry found")
+        print("no existing wod entry found. generating new entry")
+        word, definition = update_word_of_the_day(current_date, user_id)
+
+        embed = wotd_embed(ctx, word, definition, current_date)
+        await ctx.send(embed=embed)
 
 
-    await ctx.send("hello")
