@@ -100,7 +100,7 @@ def check_words_learned(user_id):
     return word_count
 
 
-@bot.command(name="stat")
+@bot.command(name="stat", help="Displays user stats")
 async def view_stat(ctx):
     try:
         user_id = ctx.author.id
@@ -113,7 +113,7 @@ async def view_stat(ctx):
         logger.error(error_message)
 
 
-@bot.command(name="profile")
+@bot.command(name="profile", help="Displays user profile")
 async def view_profile(ctx):
     try:
         user_id = ctx.author.id
@@ -128,7 +128,7 @@ async def view_profile(ctx):
         logger.error(error_message)
 
 
-@bot.command(name="lead", help="Displays the leaderboard based on the number of correct guesses.")
+@bot.command(name="lead", help="Displays the leaderboard based on the number of correct guesses")
 async def view_leaderboard(ctx):
     # dictionary of name:num_correct_guesses
     users = {}

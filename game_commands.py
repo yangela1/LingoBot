@@ -1,6 +1,6 @@
-import asyncio
 import re
 import os
+import datetime
 
 import discord
 import requests
@@ -10,6 +10,7 @@ import random
 from discord.ext import commands
 from database import userCollection
 from database import wordCollection
+from database import wordOfTheDayCollection
 from embeds import interactive_embed
 from GameConstants import GameConstants
 
@@ -716,3 +717,93 @@ async def pass_word_command(ctx):
     else:
         await ctx.send(f"You do not have enough silver to use a pass. A pass costs {GameConstants.PASS_SILVERCOST}"
                        f"<:silver:1191744440113569833>.")
+
+
+# function that returns a new word and definition
+def generate_word_of_the_day():
+    try:
+        words = get_random_words()
+
+        if not words:
+            raise ValueError("No words retrieved.")
+
+        definition = None
+        i = 0
+        while not definition and i < len(words):
+            word = words[i]
+            definition = get_def(word)
+            i += 1
+
+        if definition:
+            print(f"{word}: {definition}")
+            # Log the generated definitions
+            with open("words.txt", 'a', encoding='utf-8') as file:
+                file.write('\n'.join(definition) + '\n')
+            return word, definition
+        else:
+            print("No definition found.")
+            return None
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+
+# function that stores the WOD in the wod database
+def store_word_of_the_day(word, definition, date):
+    try:
+        # update the WOD in the database
+        existing_entry = wordOfTheDayCollection.find_one()
+        print(f"existing entry: {existing_entry}")
+
+        if existing_entry:
+            # grab the word
+            existing_word = existing_entry["word"]
+            # update the existing entry
+            wordOfTheDayCollection.update_one(
+                {"word": existing_word},
+                {"$set": {"word": word, "definition": definition, "date": date}}
+            )
+            print(f"updated wod in database {word}")
+        else:
+            # insert new entry
+            word_data = {
+                "word": word,
+                "definition": definition,
+                "date": date
+            }
+
+            print(word_data)
+            wordOfTheDayCollection.insert_one(word_data)
+    except Exception as e:
+        print(f"error updating word of the day collection {e}")
+        logger.error(f"error inserting word of the day: {word}")
+
+
+@bot.command(name="wod")
+async def word_of_the_day(ctx):
+    # get current date
+    current_date = datetime.datetime.now().strftime("%Y-%m-%d")
+
+    # check if a day has passed before generating new wod
+    existing_wod = wordOfTheDayCollection.find_one()
+
+    if existing_wod:
+        stored_date_str = existing_wod["date"]
+
+        # check if one or more days has passed
+        if stored_date_str != current_date:
+            word, definition = generate_word_of_the_day()
+
+            # store the word into WOD collection
+            store_word_of_the_day(word, definition, current_date)
+
+            # store the word into word collection
+            store_word_def(wordCollection, word, definition)
+
+            print(f"new word of the day! {word}")
+        else:
+            print(f"a day has not passed since last entry for WOD")
+    else:
+        print("no existing wod entry found")
+
+
+    await ctx.send("hello")

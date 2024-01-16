@@ -28,6 +28,7 @@ except Exception as e:
 db = mongoClient[DATABASE]
 userCollection = db["users"]
 wordCollection = db["words"]
+wordOfTheDayCollection = db["word_of_the_day"]
 
 # Check if the token was loaded successfully
 if not TOKEN:
