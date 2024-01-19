@@ -66,13 +66,6 @@ def profile_embed(ctx, lives, silver, gold, total, percentage, challenges, langu
     return embed
 
 
-# function that returns the embed for hints
-def hint_embed(word_in_question, synonym):
-    embed = discord.Embed()
-    embed.title = f"The synonym for `{word_in_question} is `{synonym}`"
-    embed.color = 0xffbe24
-
-
 # function that returns the embed for leaderboard
 def leaderboard_embed(ctx, users_guesses, current_time):
     embed = discord.Embed()
@@ -115,6 +108,5 @@ def wotd_embed(ctx, word, definition, current_date):
     embed.add_field(name='\u0020', value="")
     embed.add_field(name=f"`{word}`: {definition}", value="", inline=False)
     embed.color = discord.Color.blurple()
-    embed.set_footer(text="Learn a new word every day with $wod!")
+    embed.set_footer(text="Learn a new word every day with $wotd!")
     return embed
-

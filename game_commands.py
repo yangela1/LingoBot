@@ -102,13 +102,15 @@ async def new_game(ctx):
 
     if res:
         print("timeout")
+        view.correct_or_not = 'N'   # set to incorrect
+
 
     # update words collection with word + def
     store_word_def(wordCollection, word, corDef)
 
     # update user collection
     if view.correct_or_not == 'Y':
-        print("correct answer guessed, update to db in progress")
+        print("correct answer guessed, update to db in progress".upper())
         # get + silvers
         increment(userCollection, user_id, "coins", GameConstants.PLAY_W_SILVER)
 
@@ -118,7 +120,7 @@ async def new_game(ctx):
         # store the learnt word
         store_word_users(userCollection, user_id, "English", word)
     elif view.correct_or_not == 'N':
-        print("incorrect answer guessed, update to db in progress")
+        print("incorrect answer guessed, update to db in progress".upper())
         # decrement heart - 1
         increment(userCollection, user_id, "hearts", -1)
 
@@ -185,13 +187,14 @@ async def new_challenge(ctx):
 
     if res:
         print("timeout")
+        view.correct_or_not = 'N'
 
     # update words collection with word + def + translation
     store_word_def(wordCollection, word, corDef, language, translation)
 
     # update user collection
     if view.correct_or_not == 'Y':
-        print("correct answer guessed, update to db in progress")
+        print("correct answer guessed, update to db in progress".upper())
         # get + silvers
         increment(userCollection, user_id, "coins", GameConstants.CHAL_W_SILVER)
 
@@ -207,7 +210,7 @@ async def new_challenge(ctx):
         # store the learnt word
         store_word_users(userCollection, user_id, language, translation)
     elif view.correct_or_not == 'N':
-        print("incorrect answer guessed, update to db in progress")
+        print("incorrect answer guessed, update to db in progress".upper())
         # decrement heart - 1
         increment(userCollection, user_id, "hearts", -1)
 
@@ -659,7 +662,7 @@ def increment(users_collection, user_id, field, amount):
             logger.error(f"Error incrementing {field} for user {user_id}")
             raise ValueError(f"User {user_id} not found")
 
-        print(f"{field} incremented by {amount} for user {user_id}")
+        print(f"\t{field} incremented by {amount} for user {user_id}")
     except Exception as e:
         print(f"Error updating database: {e}")
         logger.error(f"Error updating database: {e}")
@@ -810,7 +813,7 @@ def update_word_of_the_day(current_date, user_id):
     return word, definition
 
 
-@bot.command(name="wod")
+@bot.command(name="wotd")
 async def word_of_the_day(ctx):
     user_id = ctx.author.id
 
@@ -845,5 +848,3 @@ async def word_of_the_day(ctx):
 
         embed = wotd_embed(ctx, word, definition, current_date)
         await ctx.send(embed=embed)
-
-

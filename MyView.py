@@ -18,6 +18,7 @@ class MyView(discord.ui.View):
         self.challenge = challenge
         self.current_word = current_word
         self.current_translated_word = current_translated_word
+        self.chal_message = f"`{self.current_translated_word}` in English is `{self.current_word}`.\n"
 
     # function that handles button clicks
     async def handle_button_click(self, interaction, button, button_id):
@@ -28,15 +29,13 @@ class MyView(discord.ui.View):
         # grab the correct emoji corresp to the button id
         button_emoji = self.button_emojis.get(correct_button, "❓")
 
-        chal_message = f"`{self.current_translated_word}` in English is `{self.current_word}`.\n"
-
         # check if clicked button is correct or not based on the index
         if int(button.custom_id) == self.correct_index:
             print("correct button clicked")
             self.disable_buttons()
             await interaction.response.edit_message(view=self)
             await interaction.followup.send(f"Correct!\n"
-                                            f"{chal_message if self.challenge else ''}"
+                                            f"{self.chal_message if self.challenge else ''}"
                                             f"**{self.ctx.author.name}** +{GameConstants.CHAL_W_SILVER if self.challenge else GameConstants.PLAY_W_SILVER} "
                                             f"<:silver:1191744440113569833>"
                                             f"{', +' + str(GameConstants.CHAL_W_GOLD) + ' <:gold:1191744402222223432>' if self.challenge else ''}")
@@ -47,14 +46,20 @@ class MyView(discord.ui.View):
             self.disable_buttons()
             await interaction.response.edit_message(view=self)
             await interaction.followup.send(f"Incorrect :( the correct answer is {button_emoji}\n"
-                                            f"{chal_message if self.challenge else ''}" 
+                                            f"{self.chal_message if self.challenge else ''}" 
                                             f"**{self.ctx.author.name}** -1 heart")
             self.correct_or_not = "N"
             self.stop()
 
     # function that triggers after timeout
     async def on_timeout(self):
-        await self.ctx.send(f"Timeout! {self.ctx.author.mention}")
+        correct_button = self.correct_index + 1
+        button_emoji = self.button_emojis.get(correct_button, "❓")
+        await self.ctx.send(f"Timeout! {self.ctx.author.mention}\n"
+                            f"The correct answer is {button_emoji}\n"
+                            f"{self.chal_message if self.challenge else ''}"
+                            f"**{self.ctx.author.name}** -1 heart")
+
         self.disable_buttons()
         await self.message.edit(view=self)
         self.stop()
