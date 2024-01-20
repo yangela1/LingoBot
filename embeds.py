@@ -27,13 +27,14 @@ def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, silver
 
 
 # function that returns the embed for stats
-def stat_embed(ctx, total, percentage, challenges):
+def stat_embed(ctx, total, percentage, challenges, correct_guesses):
     embed = discord.Embed()
     embed.title = f"Stats"
     embed.description = f""
     embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
     embed.add_field(name="\u200B", value=f"**Total plays**: {total}\n"
-                                         f"**Guess accuracy**: {percentage}\n"          
+                                         f"**Guess accuracy**: {percentage}\n"
+                                         f"**Score(correct guesses)**: {correct_guesses}\n"          
                                          f"**Challenges complete**: {challenges}", inline=False)
     embed.color = 0x800080
 
@@ -41,7 +42,7 @@ def stat_embed(ctx, total, percentage, challenges):
 
 
 # function that returns the embed for user profile
-def profile_embed(ctx, lives, silver, gold, total, percentage, challenges, languages):
+def profile_embed(ctx, lives, silver, gold, total, percentage, challenges, correct_guesses, languages):
     embed = discord.Embed()
     embed.title = f""
     embed.description = ""
@@ -51,6 +52,7 @@ def profile_embed(ctx, lives, silver, gold, total, percentage, challenges, langu
                                          f"**{gold}** <:gold:1191744402222223432>", inline=False)
     embed.add_field(name="\u200B", value=f"**Total plays**: {total}\n"
                                          f"**Guess accuracy**: {percentage}\n"
+                                         f"**Score(correct guesses)**: {correct_guesses}\n"  
                                          f"**Challenges complete**: {challenges}", inline=False)
     embed.color = 0x77DD77
 
@@ -101,12 +103,31 @@ def leaderboard_embed(ctx, users_guesses, current_time):
 
 
 # function that returns the embed for WOTD
-def wotd_embed(ctx, word, definition, current_date):
+def wotd_embed(ctx, word, definition, current_date, image_url=None, url=None, photographer=None):
+    footer_text = "Learn a new word every day with $wotd!"
     embed = discord.Embed()
     embed.title = f"📚 Word of the day ({current_date}) ✨"
     embed.set_author(name=ctx.bot.user.name, icon_url=ctx.bot.user.avatar.url)
     embed.add_field(name='\u0020', value="")
     embed.add_field(name=f"`{word}`: {definition}", value="", inline=False)
+    if image_url is not None:
+        embed.set_image(url=image_url)
+    if photographer is not None and url is not None:
+        creds = f"Photo was taken by {photographer} on Pexels"
+        footer_content = f"{creds}\n{url}\n{footer_text}"
+    else:
+        footer_content = footer_text
     embed.color = discord.Color.blurple()
-    embed.set_footer(text="Learn a new word every day with $wotd!")
+    embed.set_footer(text=footer_content)
     return embed
+
+
+# function that returns the embed for WOTD
+def image_embed(word, image_url, url, photographer):
+    embed = discord.Embed()
+    embed.title = word
+    embed.set_image(url=image_url)
+    embed.set_footer(text=f"Photo was taken by {photographer} on Pexels\n{url}")
+    embed.color = discord.Color.greyple()
+    return embed
+

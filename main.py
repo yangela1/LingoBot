@@ -32,6 +32,7 @@ bot.add_command(game_commands.new_challenge)
 bot.add_command(game_commands.buy_life_command)
 bot.add_command(game_commands.pass_word_command)
 bot.add_command(game_commands.word_of_the_day)
+bot.add_command(game_commands.image_def)
 
 bot.add_command(general_commands.help_response)
 bot.add_command(general_commands.check)

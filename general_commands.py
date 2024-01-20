@@ -78,7 +78,7 @@ def check_stat(guild_id, user_id):
 
     formatted_percentage = f"{int(percentage)}%"
 
-    return total, formatted_percentage, challenges
+    return total, formatted_percentage, challenges, correct_guesses
 
 
 # function that returns number of words learned in each language
@@ -104,8 +104,8 @@ async def view_stat(ctx):
     try:
         user_id = ctx.author.id
         guild_id = ctx.guild.id
-        total, percentage, challenges = check_stat(guild_id, user_id)
-        embed = stat_embed(ctx, total, percentage, challenges)
+        total, percentage, challenges, correct_guesses = check_stat(guild_id, user_id)
+        embed = stat_embed(ctx, total, percentage, challenges, correct_guesses)
 
         await ctx.send(embed=embed)
     except Exception as e:
@@ -118,10 +118,10 @@ async def view_profile(ctx):
     try:
         user_id = ctx.author.id
         guild_id = ctx.guild.id
-        total, percentage, challenges = check_stat(guild_id, user_id)
+        total, percentage, challenges, correct_guesses = check_stat(guild_id, user_id)
         silver, gold, lives = get_lives_and_coins(guild_id, user_id)
         word_count = check_words_learned(guild_id, user_id)
-        embed = profile_embed(ctx, lives, silver, gold, total, percentage, challenges, word_count)
+        embed = profile_embed(ctx, lives, silver, gold, total, percentage, challenges, correct_guesses, word_count)
 
         await ctx.send(embed=embed)
     except Exception as e:

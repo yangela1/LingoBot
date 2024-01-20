@@ -13,6 +13,7 @@ from database import wordCollection
 from database import wordOfTheDayCollection
 from embeds import interactive_embed
 from embeds import wotd_embed
+from embeds import image_embed
 from GameConstants import GameConstants
 
 # Configure the logger
@@ -25,6 +26,7 @@ logger = logging.getLogger('my_bot')
 random_word_url = "https://random-word-api.vercel.app/api?words=3"
 words_api_url = "https://wordsapiv1.p.rapidapi.com/words/"
 translate_url = "https://google-translate113.p.rapidapi.com/api/v1/translator/"
+pexels_url = "https://api.pexels.com/v1/search"
 
 # create bot
 intents = discord.Intents.all()
@@ -58,6 +60,9 @@ translate_headers = {
     "content-type": "application/x-www-form-urlencoded",
 }
 
+pexel_headers ={
+    "Authorization": os.getenv("PEXELS_KEY")
+}
 
 # play the game
 @bot.command(name="play")
@@ -851,8 +856,10 @@ async def word_of_the_day(ctx):
         # check if one or more days has passed
         if stored_date_str != current_date:
             word, definition = update_word_of_the_day(current_date, guild_id, user_id)
+            image_url, url, photographer = get_image(word)
+            print(f"{image_url} {photographer}")
+            embed = wotd_embed(ctx, word, definition, current_date, image_url, url, photographer)
 
-            embed = wotd_embed(ctx, word, definition, current_date)
             await ctx.send(embed=embed)
         else:
             print(f"a day has not passed since last entry for WOD")
@@ -860,11 +867,78 @@ async def word_of_the_day(ctx):
             # store the current WOD into user's learned words
             store_word_users(userCollection, guild_id, user_id, "English", stored_word)
 
-            embed = wotd_embed(ctx, stored_word, stored_def, stored_date_str)
+            image_url, url, photographer = get_image(stored_word)
+            print(f"{image_url} {photographer}")
+            embed = wotd_embed(ctx, stored_word, stored_def, stored_date_str, image_url, url, photographer)
             await ctx.send(embed=embed)
     else:
         print("no existing wod entry found. generating new entry")
         word, definition = update_word_of_the_day(current_date, guild_id, user_id)
-
-        embed = wotd_embed(ctx, word, definition, current_date)
+        image_url, url, photographer = get_image(word)
+        print(f"{image_url} {photographer}")
+        embed = wotd_embed(ctx, word, definition, current_date, image_url, url, photographer)
         await ctx.send(embed=embed)
+
+
+# function that retrieves an image for a word
+def get_image(word):
+    params = {
+        "query": word,
+        "orientation": "square",
+        "size": "medium"
+    }
+    try:
+        response = requests.get(url=pexels_url, headers=pexel_headers, params=params)
+        response.raise_for_status()  # grab http error code
+        data = response.json()
+        # print(data)
+        photos_list = data["photos"]
+        random_index = random.randint(0, len(photos_list) - 1)
+        image_url = data["photos"][random_index]["src"]["medium"]
+        url = data["photos"][random_index]["url"]
+        # print(url)
+        photographer = data["photos"][random_index]["photographer"]
+        return image_url, url, photographer
+    except Exception as e:
+        print(f"error retrieving an image, error {e}")
+        logger.error(f"error retrieving an image, error {e}")
+        return None, None, None
+
+
+@bot.command(name="img")
+async def image_def(ctx, *, args):
+    error_message = "Invalid input. Use `$img <word>` to get a photo representation of the word."
+
+    # Check if the user provided any arguments
+    if not args.strip():
+        await ctx.send(error_message)
+        return
+
+    words = args.split()
+
+    if len(words) != 1:
+        await ctx.send(error_message)
+        return
+
+    # Use the provided word to fetch and print its definition
+    word = words[0]
+
+    # Check if the word contains only alphabetical characters using reg expressions
+    if not re.match("^[a-zA-Z]+$", word):
+        await ctx.send(error_message)
+        return
+
+    try:
+        image_url, url, photographer = get_image(word)
+        if url is not None and photographer is not None and image_url is not None:
+            embed = image_embed(word, image_url, url, photographer)
+            await ctx.send(embed=embed)
+        else:
+            raise ValueError("Image URL or photographer is None")
+    except Exception as e:
+        print(f"error retrieving image for {word} {e}")
+        logger.error(f"error retrieving image for {word} {e}")
+        await ctx.send("Sorry! Kiwi was unable to retrieve a photo for that word.")
+
+
+
