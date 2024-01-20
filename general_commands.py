@@ -54,15 +54,15 @@ async def check(ctx):
 
 
 # function that returns stats of user
-def check_stat(user_id):
-    id_filter = {"discord_id": user_id}
-
+def check_stat(guild_id, user_id):
     # attempt to get user's data
-    result = userCollection.find_one(id_filter)
+    result = userCollection.find_one({"guild_id": guild_id, f"users.{user_id}": {"$exists": True}})
 
-    correct_guesses = result.get("correct_guess", None)
-    incorrect_guesses = result.get("incorrect_guess", None)
-    challenges = result.get("chal_complete", None)
+    existing_user = result["users"].get(str(user_id), {})
+
+    correct_guesses = existing_user.get("correct_guess", None)
+    incorrect_guesses = existing_user.get("incorrect_guess", None)
+    challenges = existing_user.get("chal_complete", None)
 
     # total guesses
     total = correct_guesses + incorrect_guesses
@@ -82,14 +82,13 @@ def check_stat(user_id):
 
 
 # function that returns number of words learned in each language
-def check_words_learned(user_id):
-    id_filter = {"discord_id": user_id}
-    words_learned_filter = {"words_learned": 1}
-
+def check_words_learned(guild_id, user_id):
     # attempt to get user's data
-    result = userCollection.find_one(id_filter, words_learned_filter)
+    result = userCollection.find_one({"guild_id": guild_id, f"users.{user_id}": {"$exists": True}})
 
-    words_learned = result["words_learned"]
+    existing_user = result["users"].get(str(user_id), {})
+
+    words_learned = existing_user.get("words_learned")
     word_count = {}
 
     for language, words in words_learned.items():
@@ -104,7 +103,8 @@ def check_words_learned(user_id):
 async def view_stat(ctx):
     try:
         user_id = ctx.author.id
-        total, percentage, challenges = check_stat(user_id)
+        guild_id = ctx.guild.id
+        total, percentage, challenges = check_stat(guild_id, user_id)
         embed = stat_embed(ctx, total, percentage, challenges)
 
         await ctx.send(embed=embed)
@@ -117,9 +117,10 @@ async def view_stat(ctx):
 async def view_profile(ctx):
     try:
         user_id = ctx.author.id
-        total, percentage, challenges = check_stat(user_id)
-        silver, gold, lives = get_lives_and_coins(user_id)
-        word_count = check_words_learned(user_id)
+        guild_id = ctx.guild.id
+        total, percentage, challenges = check_stat(guild_id, user_id)
+        silver, gold, lives = get_lives_and_coins(guild_id, user_id)
+        word_count = check_words_learned(guild_id, user_id)
         embed = profile_embed(ctx, lives, silver, gold, total, percentage, challenges, word_count)
 
         await ctx.send(embed=embed)
@@ -135,15 +136,20 @@ async def view_leaderboard(ctx):
 
     guild_id = ctx.guild.id
 
+    result = userCollection.find_one({"guild_id": guild_id, f"users": {"$exists": True}})
+
+    user_data = result["users"]
+
     # iterate through all users in collection and add to dictionary
-    for user in userCollection.find({"guild_id": guild_id}):
-        user_name = user["name"]
-        num_correct_guesses = user["correct_guess"]
+    for user_id, user_data in user_data.items():
+        user_name = user_data.get("name")
+        num_correct_guesses = user_data.get("correct_guess")
+
         users[user_name] = num_correct_guesses
 
     # sort from high to low - based on the second element of each tuple  (item[1])
     sorted_users = dict(sorted(users.items(), key=lambda item: item[1], reverse=True))
-    print(sorted_users)
+    print(f"sorted users: {sorted_users}")
 
     current_date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     embed = leaderboard_embed(ctx, sorted_users, current_date)

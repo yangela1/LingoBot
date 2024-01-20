@@ -71,9 +71,10 @@ async def new_game(ctx):
         return
 
     user_id = ctx.author.id
+    guild_id = ctx.guild.id
 
     # check if user has 1 or more lives
-    silver, gold, lives = get_lives_and_coins(user_id)
+    silver, gold, lives = get_lives_and_coins(guild_id, user_id)
 
     if lives < 1:
         await ctx.send(f"**{ctx.author}**, you have no more lives to play right now.")
@@ -112,23 +113,23 @@ async def new_game(ctx):
     if view.correct_or_not == 'Y':
         print("correct answer guessed, update to db in progress".upper())
         # get + silvers
-        increment(userCollection, user_id, "coins", GameConstants.PLAY_W_SILVER)
+        increment(userCollection, guild_id, user_id, "coins", GameConstants.PLAY_W_SILVER)
 
         # increment number of correct guesses + 1
-        increment(userCollection, user_id, "correct_guess", 1)
+        increment(userCollection, guild_id, user_id, "correct_guess", 1)
 
         # store the learnt word
-        store_word_users(userCollection, user_id, "English", word)
+        store_word_users(userCollection, guild_id, user_id, "English", word)
     elif view.correct_or_not == 'N':
         print("incorrect answer guessed, update to db in progress".upper())
         # decrement heart - 1
-        increment(userCollection, user_id, "hearts", -1)
+        increment(userCollection, guild_id, user_id, "hearts", -1)
 
         # increment number of incorrect guesses + 1
-        increment(userCollection, user_id, "incorrect_guess", 1)
+        increment(userCollection, guild_id, user_id, "incorrect_guess", 1)
 
         # store the incorrect word
-        store_wrong_word_user(userCollection, user_id, word)
+        store_wrong_word_user(userCollection, guild_id, user_id, word)
     elif view.correct_or_not == 'P':
         print("passed word")
         print(view.correct_or_not)
@@ -145,9 +146,10 @@ async def new_challenge(ctx):
         return
 
     user_id = ctx.author.id
+    guild_id = ctx.guild.id
 
     # check if user has 1 or more lives
-    silver, gold, lives = get_lives_and_coins(user_id)
+    silver, gold, lives = get_lives_and_coins(guild_id, user_id)
 
     if lives < 1:
         await ctx.send(f"**{ctx.author}**, you have no more lives to play right now.")
@@ -196,29 +198,29 @@ async def new_challenge(ctx):
     if view.correct_or_not == 'Y':
         print("correct answer guessed, update to db in progress".upper())
         # get + silvers
-        increment(userCollection, user_id, "coins", GameConstants.CHAL_W_SILVER)
+        increment(userCollection, guild_id, user_id, "coins", GameConstants.CHAL_W_SILVER)
 
         # get + gold
-        increment(userCollection, user_id, "chal_coins", GameConstants.CHAL_W_GOLD)
+        increment(userCollection, guild_id, user_id, "chal_coins", GameConstants.CHAL_W_GOLD)
 
         # increment number of correct guesses + 1
-        increment(userCollection, user_id, "correct_guess", 1)
+        increment(userCollection, guild_id, user_id, "correct_guess", 1)
 
         # increment number of challenge complete + 1
-        increment(userCollection, user_id, "chal_complete", 1)
+        increment(userCollection, guild_id, user_id, "chal_complete", 1)
 
         # store the learnt word
-        store_word_users(userCollection, user_id, language, translation)
+        store_word_users(userCollection, guild_id, user_id, language, translation)
     elif view.correct_or_not == 'N':
         print("incorrect answer guessed, update to db in progress".upper())
         # decrement heart - 1
-        increment(userCollection, user_id, "hearts", -1)
+        increment(userCollection, guild_id, user_id, "hearts", -1)
 
         # increment number of incorrect guesses + 1
-        increment(userCollection, user_id, "incorrect_guess", 1)
+        increment(userCollection, guild_id, user_id, "incorrect_guess", 1)
 
         # store the incorrect word
-        store_wrong_word_user(userCollection, user_id, translation)
+        store_wrong_word_user(userCollection, guild_id, user_id, translation)
     elif view.correct_or_not == 'P':
         print("passed challenge")
 
@@ -375,7 +377,8 @@ async def get_hint(ctx):
     is_challenge = current_view.challenge
 
     user_id = ctx.author.id
-    silver, gold, lives = get_lives_and_coins(user_id)
+    guild_id = ctx.guild.id
+    silver, gold, lives = get_lives_and_coins(guild_id, user_id)
 
     if is_challenge and silver < GameConstants.CHAL_HINT_SILVERCOST:
         await ctx.send(f"You do not have enough coins. A challenge hint costs {GameConstants.CHAL_HINT_SILVERCOST} <:silver:1191744440113569833>.")
@@ -394,23 +397,23 @@ async def get_hint(ctx):
                        f"**{ctx.author.name}** -{GameConstants.CHAL_HINT_SILVERCOST if current_view.challenge else GameConstants.PLAY_HINT_SILVERCOST} "
                        f"<:silver:1191744440113569833>")
         if is_challenge:
-            increment(userCollection, user_id, "coins", -GameConstants.CHAL_HINT_SILVERCOST)
+            increment(userCollection, guild_id, user_id, "coins", -GameConstants.CHAL_HINT_SILVERCOST)
         else:
-            increment(userCollection, user_id, "coins", -GameConstants.PLAY_HINT_SILVERCOST)
+            increment(userCollection, guild_id, user_id, "coins", -GameConstants.PLAY_HINT_SILVERCOST)
     else:
         await ctx.send(f"Sorry! Kiwi is unable to provide a hint at this time.")
 
 
 # function that returns user's lives and coins
-def get_lives_and_coins(user_id):
-    id_filter = {"discord_id": user_id}
-
+def get_lives_and_coins(guild_id, user_id):
     # attempt to get user's data
-    result = userCollection.find_one(id_filter)
+    result = userCollection.find_one({"guild_id": guild_id, f"users.{user_id}": {"$exists": True}})
 
-    silver = result.get("coins", None)
-    gold = result.get("chal_coins", None)
-    lives = result.get("hearts", None)
+    user_data = result["users"].get(str(user_id), {})
+    # print(f"user data {user_data}")
+    silver = user_data.get("coins", None)
+    gold = user_data.get("chal_coins", None)
+    lives = user_data.get("hearts", None)
     return silver, gold, lives
 
 
@@ -523,8 +526,9 @@ async def gamble_coin(ctx, *, input_str: str = ""):
     amount = int(words[0])
 
     user_id = ctx.author.id
+    guild_id = ctx.guild.id
     # get silvers from db
-    silver, gold, lives = get_lives_and_coins(user_id)
+    silver, gold, lives = get_lives_and_coins(guild_id, user_id)
 
     # they want to gamble more than they have
     if amount > silver:
@@ -543,10 +547,10 @@ async def gamble_coin(ctx, *, input_str: str = ""):
         print(f"random int = {random_int}, result = {result}")
 
         # make changes to database with resulting number
-        increment(userCollection, user_id, "coins", result)
+        increment(userCollection, guild_id, user_id, "coins", result)
 
         # get silvers from db
-        silver, gold, lives = get_lives_and_coins(user_id)
+        silver, gold, lives = get_lives_and_coins(guild_id, user_id)
 
         string = f"You have {silver} <:silver:1191744440113569833>."
 
@@ -565,9 +569,12 @@ async def gamble_coin(ctx, *, input_str: str = ""):
 
 
 # function that stores word into user collection
-def store_word_users(users_collection, user_id, language, word):
-    id_filter = {"discord_id": user_id}
-    existing_user = users_collection.find_one(id_filter)
+def store_word_users(users_collection, guild_id, user_id, language, word):
+
+    # attempt to get user's data
+    result = users_collection.find_one({"guild_id": guild_id, f"users.{user_id}": {"$exists": True}})
+
+    existing_user = result["users"].get(str(user_id), {})
 
     if existing_user:
         # check if word already exists in database
@@ -578,12 +585,12 @@ def store_word_users(users_collection, user_id, language, word):
 
             update_query = {
                 "$push": {
-                    f"words_learned.{language}": word
+                    f"users.{user_id}.words_learned.{language}": word
                 }
             }
 
             # attempt to update user's doc
-            result = users_collection.update_one(id_filter, update_query)
+            result = users_collection.update_one(result, update_query)
 
             if result.modified_count > 0:
                 print(f"Successfully added the word '{word}' to the user's words_learned in {language}.")
@@ -598,23 +605,32 @@ def store_word_users(users_collection, user_id, language, word):
 
 
 # function that stores word into users collection
-def store_wrong_word_user(users_collection, user_id, word):
-    id_filter = {"discord_id": user_id}
+def store_wrong_word_user(users_collection, guild_id, user_id, word):
+    guild_query = users_collection.find_one({"guild_id": guild_id, f"users.{user_id}": {"$exists": True}})
 
-    update_query = {
-        "$push": {
-            f"wrong_words": word
-        }
-    }
+    existing_user = guild_query["users"].get(str(user_id), {})
 
-    # attempt to update user's doc
-    result = users_collection.update_one(id_filter, update_query)
+    if existing_user:
+        # check if word already exists in database
+        wrong_words = existing_user.get("wrong_words", [])
 
-    if result.modified_count > 0:
-        print(f"Successfully added the word '{word}' to the user's wrong_words.")
-    else:
-        print(f"Failed to add the word '{word}' to the user's wrong_words.")
-        logger.error(f"Failed to add the word '{word}' to the user's wrong_words.")
+        if word not in wrong_words:
+            # word doesn't exist in user's dictionary, add it
+
+            update_query = {
+                "$push": {
+                    f"users.{user_id}.wrong_words": word
+                }
+            }
+
+            # attempt to update user's doc
+            result = users_collection.update_one(guild_query, update_query)
+
+            if result.modified_count > 0:
+                print(f"Successfully added the word '{word}' to the user's wrong_words.")
+            else:
+                print(f"Failed to add the word '{word}' to the user's wrong_words.")
+                logger.error(f"Failed to add the word '{word}' to the user's wrong_words.")
 
 
 # function that stores the word and definition into the Word collection
@@ -644,18 +660,18 @@ def store_word_def(words_collection, word, definition, language=None, translatio
 
 
 # function that increments coins, guesses, and hearts for a user
-def increment(users_collection, user_id, field, amount):
-    id_filter = {"discord_id": user_id}
+def increment(users_collection, guild_id, user_id, field, amount):
+    result = users_collection.find_one({"guild_id": guild_id, f"users.{user_id}": {"$exists": True}})
 
     # $inc operator in MongoDB is used to increment value of a field
     update_query = {
         "$inc": {
-            field: amount
+            f"users.{user_id}.{field}": amount
         }
     }
 
     try:
-        result = users_collection.update_one(id_filter, update_query)
+        result = users_collection.update_one(result, update_query)
 
         if result.matched_count == 0:
             print(f"user {user_id} not found, could not increment {field}")
@@ -672,9 +688,10 @@ def increment(users_collection, user_id, field, amount):
 @bot.command(name="buylife")
 async def buy_life_command(ctx):
     user_id = ctx.author.id
+    guild_id = ctx.guild.id
 
     # get gold and lives from database
-    silver, gold, lives = get_lives_and_coins(user_id)
+    silver, gold, lives = get_lives_and_coins(guild_id, user_id)
 
     if lives >= GameConstants.MAX_LIVES:
         await ctx.send("You have max lives already. Purchase cancelled.")
@@ -685,11 +702,12 @@ async def buy_life_command(ctx):
                        f"A life costs {GameConstants.HEART_GOLDCOST} <:gold:1191744402222223432>. Purchase cancelled.")
         return
 
+    print(f"user bought heart")
     # decrement gold
-    increment(userCollection, user_id, "chal_coins", -GameConstants.HEART_GOLDCOST)
+    increment(userCollection, guild_id, user_id, "chal_coins", -GameConstants.HEART_GOLDCOST)
 
     # increment life
-    increment(userCollection, user_id, "hearts", 1)
+    increment(userCollection, guild_id, user_id, "hearts", 1)
 
     await ctx.send(f"Purchase successful!\n"
                    f"**{ctx.author.name}** -{GameConstants.HEART_GOLDCOST} <:gold:1191744402222223432>, "
@@ -699,6 +717,7 @@ async def buy_life_command(ctx):
 @bot.command(name="pass")
 async def pass_word_command(ctx):
     user_id = ctx.author.id
+    guild_id = ctx.guild.id
 
     print(f"{ctx.author.name} used a pass")
     global current_view, game_starter
@@ -714,10 +733,10 @@ async def pass_word_command(ctx):
         return
 
     # get gold and lives from database
-    silver, gold, lives = get_lives_and_coins(user_id)
+    silver, gold, lives = get_lives_and_coins(guild_id, user_id)
 
     if silver >= 3:
-        increment(userCollection, user_id, "coins", -GameConstants.PASS_SILVERCOST)
+        increment(userCollection, guild_id, user_id, "coins", -GameConstants.PASS_SILVERCOST)
 
         # stop the current view
         current_view.correct_or_not = 'P'
@@ -796,7 +815,7 @@ def store_word_of_the_day(word, definition, date):
 
 
 # function that grabs a new word, stores it into the WOD collection and word collection
-def update_word_of_the_day(current_date, user_id):
+def update_word_of_the_day(current_date, guild_id, user_id):
     word, definition = generate_word_of_the_day()
 
     # store the word into WOD collection
@@ -806,7 +825,7 @@ def update_word_of_the_day(current_date, user_id):
     store_word_def(wordCollection, word, definition)
 
     # store the word into user's learned_words
-    store_word_users(userCollection, user_id, "English", word)
+    store_word_users(userCollection, guild_id, user_id, "English", word)
 
     print(f"new word of the day! {word}")
 
@@ -816,6 +835,7 @@ def update_word_of_the_day(current_date, user_id):
 @bot.command(name="wotd")
 async def word_of_the_day(ctx):
     user_id = ctx.author.id
+    guild_id = ctx.guild.id
 
     # get current date
     current_date = datetime.datetime.now().strftime("%Y-%m-%d")
@@ -830,7 +850,7 @@ async def word_of_the_day(ctx):
 
         # check if one or more days has passed
         if stored_date_str != current_date:
-            word, definition = update_word_of_the_day(current_date, user_id)
+            word, definition = update_word_of_the_day(current_date, guild_id, user_id)
 
             embed = wotd_embed(ctx, word, definition, current_date)
             await ctx.send(embed=embed)
@@ -838,13 +858,13 @@ async def word_of_the_day(ctx):
             print(f"a day has not passed since last entry for WOD")
 
             # store the current WOD into user's learned words
-            store_word_users(userCollection, user_id, "English", stored_word)
+            store_word_users(userCollection, guild_id, user_id, "English", stored_word)
 
             embed = wotd_embed(ctx, stored_word, stored_def, stored_date_str)
             await ctx.send(embed=embed)
     else:
         print("no existing wod entry found. generating new entry")
-        word, definition = update_word_of_the_day(current_date, user_id)
+        word, definition = update_word_of_the_day(current_date, guild_id, user_id)
 
         embed = wotd_embed(ctx, word, definition, current_date)
         await ctx.send(embed=embed)

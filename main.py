@@ -58,20 +58,34 @@ async def on_message(message):
 
     # check if message starts with bot's command prefix
     if message.content.startswith(bot.command_prefix):
-        # check if user is registered
+
         user_id = message.author.id
         user_name = message.author.name
         user_guild_id = message.guild.id
         user_guild_name = message.guild
 
-        # check if user is registered in the same guild
-        existing_user = userCollection.find_one({"discord_id": user_id, "guild_id": user_guild_id})
+        # check if guild exists
+        existing_guild = userCollection.find_one({"guild_id": user_guild_id})
+
+        if not existing_guild:
+            register_guild(user_guild_id)
+
+        # then check if user exists within the guild
+        existing_user = userCollection.find_one({"guild_id": user_guild_id, f"users.{user_id}": {"$exists": True}})
 
         if not existing_user:
             # if user is not reg, register them to database
             register_user(user_id, user_name, user_guild_id, user_guild_name)
 
     await bot.process_commands(message)
+
+
+def register_guild(guild_id):
+    userCollection.insert_one({
+        "guild_id": guild_id,
+        "users": {}
+    })
+    print(f"successfully inserted guild {guild_id} into database")
 
 
 def register_user(uid, name, guildid, guildname):
@@ -81,7 +95,6 @@ def register_user(uid, name, guildid, guildname):
     new_user_data = {
         "discord_id": uid,
         "name": name,
-        "guild_id": guildid,
         "hearts": 3,
         "coins": 0,
         "chal_coins": 0,
@@ -97,16 +110,25 @@ def register_user(uid, name, guildid, guildname):
         "correct_guess": 0,
         "incorrect_guess": 0,
         "chal_complete": 0
+
     }
     # insert new user into users
-    result = userCollection.insert_one(new_user_data)
-    print(result)
+    result = userCollection.update_one({"guild_id": guildid},
+                                       {"$set": {f"users.{uid}": new_user_data}}, upsert=True)
 
     if result.acknowledged:
-        print(f"successfully inserted {name} added with ID: {result.inserted_id}")
+        print(f"successfully inserted {name} {uid} into guild {guildid}")
     else:
         print("failed to insert user data")
         logger.error(f"error inserting user data: {name} {uid}")
+
+
+@bot.event
+async def on_guild_join(guild):
+    # check if guild exists in user collection
+    if not userCollection.find_one({"guild_id": guild.id}):
+        register_guild(guild.id)
+    print(f"Bot joined guild: {guild.name} {guild.id} and added to database")
 
 
 # list of commands

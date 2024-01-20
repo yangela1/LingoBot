@@ -33,7 +33,7 @@ def stat_embed(ctx, total, percentage, challenges):
     embed.description = f""
     embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
     embed.add_field(name="\u200B", value=f"**Total plays**: {total}\n"
-                                         f"**Correct guesses**: {percentage}\n"
+                                         f"**Guess accuracy**: {percentage}\n"          
                                          f"**Challenges complete**: {challenges}", inline=False)
     embed.color = 0x800080
 
@@ -50,7 +50,7 @@ def profile_embed(ctx, lives, silver, gold, total, percentage, challenges, langu
     embed.add_field(name="Kiwis:", value=f"**{silver}** <:silver:1191744440113569833>  "
                                          f"**{gold}** <:gold:1191744402222223432>", inline=False)
     embed.add_field(name="\u200B", value=f"**Total plays**: {total}\n"
-                                         f"**Correct guesses**: {percentage}\n"
+                                         f"**Guess accuracy**: {percentage}\n"
                                          f"**Challenges complete**: {challenges}", inline=False)
     embed.color = 0x77DD77
 
