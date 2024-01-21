@@ -8,6 +8,7 @@ from game_commands import get_lives_and_coins
 from embeds import stat_embed
 from embeds import profile_embed
 from embeds import leaderboard_embed
+from PaginationView import PaginationView
 
 # Configure the logger
 logging.basicConfig(level=logging.ERROR, filename='bot_errors.log', filemode='a',
@@ -156,4 +157,21 @@ async def view_leaderboard(ctx):
     await ctx.send(embed=embed)
 
 
+def get_words_learned(guild_id, user_id):
+    result = userCollection.find_one({"guild_id": guild_id, f"users.{user_id}": {"$exists": True}})
+    existing_user = result["users"].get(str(user_id), {})
 
+    users_words = existing_user.get("words_learned", {}).get("English", [])
+    return users_words
+
+
+@bot.command(name="mywords", help="Displays all the words guessed correctly")
+async def view_dictionary(ctx):
+    # attempt to get user's data
+    guild_id = ctx.guild.id
+    user_id = ctx.author.id
+    users_words = get_words_learned(guild_id, user_id)
+
+    view = PaginationView(ctx)
+    view.data = users_words
+    await view.send(ctx)

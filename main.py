@@ -40,7 +40,7 @@ bot.add_command(general_commands.say_hello)
 bot.add_command(general_commands.view_stat)
 bot.add_command(general_commands.view_profile)
 bot.add_command(general_commands.view_leaderboard)
-
+bot.add_command(general_commands.view_dictionary)
 
 # this is called when bot is ready to start being used
 @bot.event

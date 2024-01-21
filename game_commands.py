@@ -832,7 +832,7 @@ def update_word_of_the_day(current_date, guild_id, user_id):
     # store the word into user's learned_words
     store_word_users(userCollection, guild_id, user_id, "English", word)
 
-    print(f"new word of the day! {word}")
+    print(f"new word of the day! '{word}'")
 
     return word, definition
 
@@ -894,14 +894,14 @@ def get_image(word):
         # print(data)
         photos_list = data["photos"]
         random_index = random.randint(0, len(photos_list) - 1)
-        image_url = data["photos"][random_index]["src"]["medium"]
-        url = data["photos"][random_index]["url"]
+        image_url = data["photos"][0]["src"]["medium"]
+        url = data["photos"][0]["url"]
         # print(url)
-        photographer = data["photos"][random_index]["photographer"]
+        photographer = data["photos"][0]["photographer"]
         return image_url, url, photographer
     except Exception as e:
         print(f"error retrieving an image, error {e}")
-        logger.error(f"error retrieving an image, error {e}")
+        logger.error(f"error retrieving an image for word '{word}', error {e}")
         return None, None, None
 
 
@@ -936,8 +936,8 @@ async def image_def(ctx, *, args):
         else:
             raise ValueError("Image URL or photographer is None")
     except Exception as e:
-        print(f"error retrieving image for {word} {e}")
-        logger.error(f"error retrieving image for {word} {e}")
+        print(f"error retrieving image for '{word}' {e}")
+        logger.error(f"error retrieving image for '{word}' {e}")
         await ctx.send("Sorry! Kiwi was unable to retrieve a photo for that word.")
 
 

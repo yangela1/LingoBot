@@ -73,6 +73,7 @@ class MyView(discord.ui.View):
         for child in self.children:
             if isinstance(child, discord.ui.Button):
                 child.disabled = True
+                child.style = discord.ButtonStyle.gray
 
     # function that checks whether the user who is interacting with it is not anyone else
     async def interaction_check(self, interaction) -> bool:
