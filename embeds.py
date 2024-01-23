@@ -134,8 +134,9 @@ def image_embed(word, image_url, url, photographer):
 
 def dictionary_embed(ctx, data, current_page, total_pages):
     embed = discord.Embed()
-    embed.title = f"🧠 {ctx.author.name}'s word bank🧠"
-    embed.description = "Here's a list of words you've mastered so far:"
+    embed.title = f"🧠 {ctx.author.name}'s word bank 🧠"
+    embed.description = ("Use `$def <word>` to get the definition.\n"
+                         "Here's a list of words you've mastered so far:")
     embed.add_field(name='\u0020', value="")
     embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
 
@@ -145,6 +146,5 @@ def dictionary_embed(ctx, data, current_page, total_pages):
     embed.color = discord.Color.purple()
 
     embed.set_footer(text=f"Page {current_page} / {total_pages}")
-
 
     return embed
