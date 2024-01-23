@@ -22,7 +22,7 @@ class MyView(discord.ui.View):
 
     # function that handles button clicks
     async def handle_button_click(self, interaction, button, button_id):
-        print(f"button {button_id} clicked (index {button.custom_id})")
+        # print(f"button {button_id} clicked (index {button.custom_id})")
         # the correct button id: 1, 2, or 3
         correct_button = self.correct_index + 1
 
@@ -31,7 +31,7 @@ class MyView(discord.ui.View):
 
         # check if clicked button is correct or not based on the index
         if int(button.custom_id) == self.correct_index:
-            print("correct button clicked")
+            # print("correct button clicked")
             self.disable_buttons()
             await interaction.response.edit_message(view=self)
             await interaction.followup.send(f"Correct!\n"

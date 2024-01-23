@@ -7,7 +7,7 @@ import game_commands
 import general_commands
 from database import userCollection
 from database import TOKEN
-
+from LingoRoles import lingo_roles
 
 # create bot
 intents = discord.Intents.all()
@@ -23,15 +23,6 @@ logger = logging.getLogger('my_bot')
 # remove default help command
 bot.remove_command('help')
 
-roles = {
-    "Lingo Noob": 0-25,
-    "Lingo Learner": 26-50,
-    "Lingo Expert": 51-100,
-    "Lingo Legend": 101-200,
-    "Lingo Master": 201-300,
-    "Lingo Boss": 301-400,
-    "Lingo Einstein": 401
-}
 
 # register imported commands with the bot
 bot.add_command(game_commands.new_game)
@@ -74,7 +65,7 @@ async def on_message(message):
         user_id = message.author.id
         user_name = message.author.name
         user_guild_id = message.guild.id
-        user_guild_name = message.guild
+        user_guild = message.guild
 
         # check if guild exists
         existing_guild = userCollection.find_one({"guild_id": user_guild_id})
@@ -87,9 +78,7 @@ async def on_message(message):
 
         if not existing_user:
             # if user is not reg, register them to database
-            register_user(user_id, user_name, user_guild_id, user_guild_name)
-
-        # add noob role to Member
+            register_user(user_id, user_name, user_guild_id, user_guild)
 
     await bot.process_commands(message)
 
@@ -149,10 +138,11 @@ async def on_guild_join(guild):
 # function that adds all roles to the guild if guild doesn't have it
 async def add_roles_to_guild(guild):
     # add roles to guild
-    for role_name, guess_range in roles.items():
+    for role_name, properties in lingo_roles.items():
+        colour = properties["color"]
         existing_role = discord.utils.get(guild.roles, name=role_name)
         if not existing_role:
-            await guild.create_role(name=role_name)
+            await guild.create_role(name=role_name, colour=colour)
             print(f"created role {role_name} in {guild.name}")
         else:
             print(f"role {role_name} already exists in {guild.name}")
@@ -162,14 +152,14 @@ async def add_roles_to_guild(guild):
 
 @bot.command(name="roles")
 async def list_roles(ctx):
-    lingo_roles = ctx.guild.roles
-    excluded_roles = ["@everyone", "Lingo Bot"]
-    role_names = [role.name for role in lingo_roles if role.name not in excluded_roles]
+    all_roles = ctx.guild.roles
+    excluded_roles = ["Lingo Bot"]
+    lingo_roles = [role.name for role in all_roles if "Lingo" in role.name and role.name not in excluded_roles]
 
     desired_order = ["Lingo Noob", "Lingo Learner", "Lingo Expert", "Lingo Legend", "Lingo Master", "Lingo Boss", "Lingo Einstein"]
 
-    # sort role names based on desired order, not found roles will be palced at end of list
-    sorted_roles = sorted(role_names, key=lambda x:desired_order.index(x) if x in desired_order else float('inf'))
+    # sort role names based on desired order, not found roles will be placed at end of list
+    sorted_roles = sorted(lingo_roles, key=lambda x: desired_order.index(x) if x in desired_order else float('inf'))
 
     print(f"{', '.join(sorted_roles)}")
 

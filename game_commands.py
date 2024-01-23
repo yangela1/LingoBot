@@ -8,6 +8,7 @@ import logging
 import random
 
 from discord.ext import commands
+
 from database import userCollection
 from database import wordCollection
 from database import wordOfTheDayCollection
@@ -15,6 +16,7 @@ from embeds import interactive_embed
 from embeds import wotd_embed
 from embeds import image_embed
 from GameConstants import GameConstants
+from LingoRoles import lingo_roles
 
 # Configure the logger
 logging.basicConfig(level=logging.ERROR, filename='bot_errors.log', filemode='a',
@@ -139,6 +141,9 @@ async def new_game(ctx):
         print("passed word")
         print(view.correct_or_not)
 
+    # update lingo role
+    await update_role_based_on_score(ctx, guild_id, user_id)
+
 
 @bot.command(name="chal")
 async def new_challenge(ctx):
@@ -169,7 +174,7 @@ async def new_challenge(ctx):
 
     # put the word through translate api
     translation = translate_word(word, code)
-    print(f"translated word `{word}` is `{translation}`")
+    # print(f"translated word `{word}` is `{translation}`")
 
     global current_word
     current_word = word  # set global word
@@ -229,12 +234,14 @@ async def new_challenge(ctx):
     elif view.correct_or_not == 'P':
         print("passed challenge")
 
+    # update lingo role
+    await update_role_based_on_score(ctx, guild_id, user_id)
 
 # function that chooses a random hard mode language
 def get_random_language():
     result = random.choice(list(hard_languages.items()))
     key, value = result
-    print(f"random language: {key} {value}")
+    # print(f"random language: {key} {value}")
     return key, value
 
 
@@ -328,17 +335,17 @@ def get_def(word):
         # print(first_definition)
         return first_definition
     except requests.exceptions.RequestException as e:
-        print("unable to request word def")
+        # print("unable to request word def")
         logger.error(f"Definition request exception: {e} \nError: Unable to fetch definition for '{word}'")
         return None
     except (IndexError, KeyError) as e:
         # Handle JSON parsing errors or missing data
-        print("unable to request word def")
+        # print("unable to request word def")
         logging.error(f"JSON Parsing Error: {e} \nError: No definition found for '{word}'")
         return None
     except Exception as e:
         # Handle other unexpected errors
-        print("unable to request word def")
+        # print("unable to request word def")
         logging.error(f"An unexpected error occurred: {e} \nError: An unexpected error occurred for '{word}'")
         return None
 
@@ -941,4 +948,46 @@ async def image_def(ctx, *, args):
         await ctx.send("Sorry! Kiwi was unable to retrieve a photo for that word.")
 
 
+def get_correct_guesses(guild_id, user_id):
+    # attempt to get user's data
+    result = userCollection.find_one({"guild_id": guild_id, f"users.{user_id}": {"$exists": True}})
 
+    existing_user = result["users"].get(str(user_id), {})
+
+    correct_guesses = existing_user.get("correct_guess", None)
+    return correct_guesses
+
+
+# function that updates the role based on the score
+async def update_role_based_on_score(ctx, guild_id, user_id):
+    member = ctx.author
+
+    # get score from database
+    score = get_correct_guesses(guild_id, user_id)
+
+    for role_name, properties in lingo_roles.items():
+        score_range = properties["range"]
+        lower_bound, upper_bound = map(int, score_range.split('-'))
+
+        if int(lower_bound) <= score <= int(upper_bound):
+            role = discord.utils.get(member.guild.roles, name=role_name)
+
+            if role:
+                roles_to_remove = [r for r in member.roles if r.name in lingo_roles.keys()]
+
+                # check if the role is not already in the member's roles
+                if role not in member.roles:
+                    await member.remove_roles(*roles_to_remove)
+                    await member.add_roles(role)
+                    # print(f"updated role for {member.name} based on score: {role_name}")
+
+                    # tell user
+                    await ctx.send(f"Congratulations {member.mention}! Your role has been updated to `{role_name}` 🎉\n"
+                                   f"`$profile` to see your new role badge\n"
+                                   f"`$roles` to find out how to get certain roles")
+                # else:
+                #     print(f"{member.name} already has the role {role_name}")
+            else:
+                print(f"role {role_name} not found, cannnot update role")
+                logger.error(f"role {role_name} not found, cannnot update role")
+            break

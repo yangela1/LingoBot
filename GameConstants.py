@@ -1,3 +1,4 @@
+
 class GameConstants:
     PLAY_W_SILVER = 2
     CHAL_W_SILVER = 3
@@ -7,3 +8,4 @@ class GameConstants:
     HEART_GOLDCOST = 1
     MAX_LIVES = 3
     PASS_SILVERCOST = 3
+
