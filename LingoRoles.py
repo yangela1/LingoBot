@@ -9,3 +9,4 @@ lingo_roles = {
     "Lingo Boss": {"range": "301-400", "color": discord.Colour.red(), "emoji": "<:boss:1199098112275402943>"},
     "Lingo Einstein": {"range": "401-99999999999", "color": discord.Colour.orange(), "emoji": "<:einstein:1199098135482478603>"}
 }
+

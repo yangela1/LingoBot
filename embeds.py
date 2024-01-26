@@ -1,6 +1,6 @@
 import discord
 from MyView import MyView
-
+from LingoRoles import lingo_roles
 
 # function to show question
 def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, silver, gold, correct_index, challenge,
@@ -147,4 +147,38 @@ def dictionary_embed(ctx, data, current_page, total_pages):
 
     embed.set_footer(text=f"Page {current_page} / {total_pages}")
 
+    return embed
+
+
+# create an embed that shows user what all the roles are and how they can earn it
+def role_embed(ctx):
+    embed = discord.Embed()
+    embed.set_author(name=ctx.bot.user.name, icon_url=ctx.bot.user.avatar.url)
+    embed.title = f"LingoBot Role Ladder 🧗"
+    embed.description = (f"Each role grants you special badges displayed on your profile.\n"
+                         f"Keep playing `$play`, `$chal` to earn points and climb the ranks!")
+
+    embed.color = discord.Color.og_blurple()
+
+    embed.add_field(name='\u0020', value="")
+    for index, (role_name, properties) in enumerate(reversed(lingo_roles.items())):
+        score_range = properties["range"]
+        lower_bound, upper_bound = map(int, score_range.split('-'))
+        if index == 0:
+            medal_emoji = "🥇"
+        elif index == 1:
+            medal_emoji = "🥈"
+        elif index == 2:
+            medal_emoji = "🥉"
+        elif index == 3 or index == 4:
+            medal_emoji = "🌟"
+        else:
+            medal_emoji = "⭐"
+
+        embed.add_field(name=f"{medal_emoji} {role_name}",
+                        value=f"Score: {lower_bound}-{upper_bound}" if index != 0 else
+                        f"Score: {lower_bound}+", inline=False)
+
+    embed.set_footer(text="Check your score using $stat or $profile\n"
+                          "Check the leaderboard in your server using $lead")
     return embed

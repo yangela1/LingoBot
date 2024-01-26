@@ -985,8 +985,8 @@ async def update_role_based_on_score(ctx, guild_id, user_id):
                     await ctx.send(f"Congratulations {member.mention}! Your role has been updated to `{role_name}` 🎉\n"
                                    f"`$profile` to see your new role badge\n"
                                    f"`$roles` to find out how to get certain roles")
-                # else:
-                #     print(f"{member.name} already has the role {role_name}")
+                else:
+                    print(f"{member.name} already has the role {role_name}")
             else:
                 print(f"role {role_name} not found, cannnot update role")
                 logger.error(f"role {role_name} not found, cannnot update role")

@@ -42,7 +42,7 @@ bot.add_command(general_commands.view_stat)
 bot.add_command(general_commands.view_profile)
 bot.add_command(general_commands.view_leaderboard)
 bot.add_command(general_commands.view_dictionary)
-
+bot.add_command(general_commands.view_roles)
 
 # this is called when bot is ready to start being used
 @bot.event
@@ -150,34 +150,11 @@ async def add_roles_to_guild(guild):
     print(f"All roles added to {guild.name}")
 
 
-@bot.command(name="roles")
-async def list_roles(ctx):
-    all_roles = ctx.guild.roles
-    excluded_roles = ["Lingo Bot"]
-    lingo_roles = [role.name for role in all_roles if "Lingo" in role.name and role.name not in excluded_roles]
-
-    desired_order = ["Lingo Noob", "Lingo Learner", "Lingo Expert", "Lingo Legend", "Lingo Master", "Lingo Boss", "Lingo Einstein"]
-
-    # sort role names based on desired order, not found roles will be placed at end of list
-    sorted_roles = sorted(lingo_roles, key=lambda x: desired_order.index(x) if x in desired_order else float('inf'))
-
-    print(f"{', '.join(sorted_roles)}")
-
-    # create an embed that shows user what all the roles are and how they can earn it
-
-
 # list of commands
 @bot.command(name='commands')
 async def commands(ctx):
     # List all available commands
     command_list = [command.name for command in bot.commands]
     await ctx.send(f"Available commands: {', '.join(command_list)}")
-
-
-# assign members special roles based on score
-@bot.event
-async def on_member_update(before, after):
-    pass
-
 
 bot.run(TOKEN)

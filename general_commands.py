@@ -8,6 +8,7 @@ from game_commands import get_lives_and_coins
 from embeds import stat_embed
 from embeds import profile_embed
 from embeds import leaderboard_embed
+from embeds import role_embed
 from PaginationView import PaginationView
 
 # Configure the logger
@@ -175,3 +176,9 @@ async def view_dictionary(ctx):
     view = PaginationView(ctx)
     view.data = users_words
     await view.send(ctx)
+
+
+@bot.command(name="roles")
+async def view_roles(ctx):
+    embed = role_embed(ctx)
+    await ctx.send(embed=embed)
