@@ -2,6 +2,7 @@ import discord
 
 from embeds import dictionary_embed
 
+
 class PaginationView(discord.ui.View):
     current_page = 1
     sep = 10

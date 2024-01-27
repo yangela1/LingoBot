@@ -66,6 +66,7 @@ pexel_headers ={
     "Authorization": os.getenv("PEXELS_KEY")
 }
 
+
 # play the game
 @bot.command(name="play")
 async def new_game(ctx):
@@ -173,7 +174,7 @@ async def new_challenge(ctx):
     word = question["word"]  # current game word
 
     # put the word through translate api
-    translation = translate_word(word, code)
+    translation = translate_word(word, "en", code)
     # print(f"translated word `{word}` is `{translation}`")
 
     global current_word
@@ -237,6 +238,7 @@ async def new_challenge(ctx):
     # update lingo role
     await update_role_based_on_score(ctx, guild_id, user_id)
 
+
 # function that chooses a random hard mode language
 def get_random_language():
     result = random.choice(list(hard_languages.items()))
@@ -253,8 +255,9 @@ def get_code(language):
         response.raise_for_status()
         data = response.json()
         target_code = None
+        lowercase_language = language.lower()
         for entry in data:
-            if entry["language"] == language:
+            if entry["language"].lower() == lowercase_language:
                 target_code = entry["code"]
                 break
 
@@ -272,12 +275,12 @@ def get_code(language):
 
 
 # function that returns the translated word
-def translate_word(word, code):
+def translate_word(word, source_code, target_code):
     api_url = f"{translate_url}text"
 
     payload = {
-        "from": "en",
-        "to": code,
+        "from": source_code,
+        "to": target_code,
         "text": word
     }
 
@@ -290,8 +293,8 @@ def translate_word(word, code):
         # print(f"translation of {word} is {translation}")
         return translation.lower()
     except Exception as e:
-        print(f"An error occurred while translating the word '{word}' into code '{code}'")
-        logger.error(f"An error occurred while translating the word {word}, code {code} {e}")
+        print(f"An error occurred while translating the word '{word}' into code '{target_code}'")
+        logger.error(f"An error occurred while translating the word {word}, code {target_code} {e}")
         return None
 
 
@@ -477,7 +480,7 @@ def generate_question():
 
 @bot.command(name="def")
 # function that returns a definition
-async def get_word_definition(ctx, *, args):
+async def get_word_definition(ctx, *, args: str = ""):
     error_message = "Invalid input. Use `$def <word>` to get the definition."
     # Check if the user provided any arguments
     if not args.strip():
@@ -913,7 +916,7 @@ def get_image(word):
 
 
 @bot.command(name="img")
-async def image_def(ctx, *, args):
+async def image_def(ctx, *, args: str = ""):
     error_message = "Invalid input. Use `$img <word>` to get a photo representation of the word."
 
     # Check if the user provided any arguments
@@ -991,3 +994,51 @@ async def update_role_based_on_score(ctx, guild_id, user_id):
                 print(f"role {role_name} not found, cannnot update role")
                 logger.error(f"role {role_name} not found, cannnot update role")
             break
+
+
+# command that translates a given word to english based on given source language
+@bot.command(name="trl")
+async def get_translation(ctx, *, args: str = ""):
+    ip = "Invalid input."
+    error_input_message = ("Use `$trl <word(s)> <source language>` to get the English translation.\n"
+                           "e.g. `$trl merci french`")
+
+    # Check if the user provided any arguments
+    if not args.strip():
+        await ctx.send(f"{ip} {error_input_message}")
+        return
+
+    words = args.split()
+
+    # Check if the word contains any digits or special characters
+    special_characters = set(")(*&^%$#@!")
+    if any(word.isnumeric() or any(char in special_characters for char in word) for word in words):
+        await ctx.send(f"{ip} {error_input_message}")
+        return
+
+    source_language = words[-1]
+    source_words = words[0:-1]     # a list
+
+    word_to_translate = " ".join(source_words)
+    print(word_to_translate)
+
+    error_message = (f"Sorry! Kiwi could not translate `{word_to_translate}` from `{source_language.capitalize()}` "
+                     f"to English.")
+
+    # grab source language code
+    code = get_code(source_language)
+
+    if code:
+        # first check if the word definition is stored in the database before fetching
+        existing_word = wordCollection.find_one({source_language.capitalize(): word_to_translate})
+
+        if existing_word:
+            english_translation = existing_word.get("word")
+            print(f"found in db. the english translation of {word_to_translate} is {english_translation}")
+        else:
+            english_translation = translate_word(word_to_translate, code, "en")
+            print(f"not found in db. translated word to english is: {english_translation}")
+        await ctx.send(f"`{word_to_translate}` in {source_language.capitalize()} is `{english_translation}` in English.")
+    else:
+        await ctx.send(f"{error_message}\n{error_input_message}")
+

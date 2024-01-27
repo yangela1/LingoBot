@@ -34,7 +34,7 @@ class MyView(discord.ui.View):
             # print("correct button clicked")
             self.disable_buttons()
             await interaction.response.edit_message(view=self)
-            await interaction.followup.send(f"Correct!\n"
+            await interaction.followup.send(f"Correct! `{self.current_translated_word if self.challenge else self.current_word}` has been added to **{self.ctx.author.name}**'s personal word bank! ($mywords) \n"
                                             f"{self.chal_message if self.challenge else ''}"
                                             f"**{self.ctx.author.name}** +{GameConstants.CHAL_W_SILVER if self.challenge else GameConstants.PLAY_W_SILVER} "
                                             f"<:silver:1191744440113569833>"

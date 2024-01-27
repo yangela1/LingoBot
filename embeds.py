@@ -2,14 +2,16 @@ import discord
 from MyView import MyView
 from LingoRoles import lingo_roles
 
+
 # function to show question
 def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, silver, gold, correct_index, challenge,
                       language=None, translation=None):
+    stuck_message = f"stuck? use a $hint or $pass the word"
     embed = discord.Embed()
     if language:
         embed.title = f"Guess the meaning of this word"
         embed.description = f"**`{translation}`** _({language})_"
-        embed.color = 0xd13636
+        embed.color = discord.Color.dark_green()
     else:
         embed.title = "Guess the meaning of this word"
         embed.description = f"**`{word}`**"
@@ -20,6 +22,7 @@ def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, silver
     embed.add_field(name="", value=f"Kiwis: {silver} <:silver:1191744440113569833>"
     # f" {gold} <:gold:1191744402222223432>"
                                    f"\nLives: {remaining_lives}")
+    embed.set_footer(text=stuck_message)
 
     view = MyView(ctx, correct_index, challenge, word, translation)
 
@@ -135,7 +138,8 @@ def image_embed(word, image_url, url, photographer):
 def dictionary_embed(ctx, data, current_page, total_pages):
     embed = discord.Embed()
     embed.title = f"🧠 {ctx.author.name}'s word bank 🧠"
-    embed.description = ("Use `$def <word>` to get the definition.\n"
+    embed.description = ("Use `$def <word>` to get the definition, <word> must be in English.\n"
+                         "Use `$trl <word(s)> <source language>` to get the English translation.\n\n"
                          "Here's a list of words you've mastered so far:")
     embed.add_field(name='\u0020', value="")
     embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)

@@ -34,6 +34,7 @@ bot.add_command(game_commands.buy_life_command)
 bot.add_command(game_commands.pass_word_command)
 bot.add_command(game_commands.word_of_the_day)
 bot.add_command(game_commands.image_def)
+bot.add_command(game_commands.get_translation)
 
 bot.add_command(general_commands.help_response)
 bot.add_command(general_commands.check)
@@ -133,6 +134,12 @@ async def on_guild_join(guild):
         register_guild(guild.id)
     print(f"Bot joined guild: {guild.name} {guild.id} and added to database")
     await add_roles_to_guild(guild)
+
+
+@bot.event
+async def on_guild_remove(guild):
+    pass
+    # remove all the lingo roles from the guild
 
 
 # function that adds all roles to the guild if guild doesn't have it

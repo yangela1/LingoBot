@@ -162,8 +162,23 @@ def get_words_learned(guild_id, user_id):
     result = userCollection.find_one({"guild_id": guild_id, f"users.{user_id}": {"$exists": True}})
     existing_user = result["users"].get(str(user_id), {})
 
-    users_words = existing_user.get("words_learned", {}).get("English", [])
-    return users_words
+    english_words = existing_user.get("words_learned", {}).get("English", [])
+    spanish_words = existing_user.get("words_learned", {}).get("Spanish", [])
+    modified_spanish_words = [word + " (Spanish)" for word in spanish_words]
+    french_words = existing_user.get("words_learned", {}).get("French", [])
+    modified_french_words = [word + " (French)" for word in french_words]
+    german_words = existing_user.get("words_learned", {}).get("German", [])
+    modified_german_words = [word + " (German)" for word in german_words]
+    italian_words = existing_user.get("words_learned", {}).get("Italian", [])
+    modified_italian_words = [word + " (Italian)" for word in italian_words]
+    swedish_words = existing_user.get("words_learned", {}).get("Swedish", [])
+    modified_swedish_words = [word + " (Swedish)" for word in swedish_words]
+
+    words_list = []
+    for lst in [english_words, modified_spanish_words, modified_french_words, modified_german_words,
+                 modified_italian_words, modified_swedish_words]:
+        words_list.extend(lst)
+    return words_list
 
 
 @bot.command(name="mywords", help="Displays all the words guessed correctly")
