@@ -140,7 +140,7 @@ async def on_guild_join(guild):
     await add_roles_to_guild(guild)
 
 
-@bot.command(name="remL", help="For server owner to easily remove all user roles related to Lingo Bot.")
+@bot.command(name="remL", help="For admin to easily remove all user roles related to Lingo Bot.")
 async def remove_roles(ctx):
     try:
         # Remove all the lingo roles from the guild
@@ -152,20 +152,19 @@ async def remove_roles(ctx):
                 await role.delete()
             except Exception as e:
                 print(f"Error removing role {role.name}: {e}")
-
         await ctx.send("Removed all `user` roles related to `LingoBot` from this server.")
-    except commands.errors.NotOwner:
-        await ctx.send("You must be the server owner to use this command.")
     except Exception as e:
         print(f"unexpected error occurred: {e}")
 
 
-@bot.command(name="addL", help="For server owner to easily add all user roles related to Lingo Bot.")
+@bot.command(name="addL", help="For admin to easily add all user roles related to Lingo Bot.")
 async def add_roles(ctx):
-
-    await add_roles_to_guild(ctx.guild)
-    await ctx.send("All `user` roles related to `LingoBot` added to this server.")
-
+    try:
+        await add_roles_to_guild(ctx.guild)
+        await ctx.send("All `user` roles related to `LingoBot` added to this server.")
+    except Exception as e:
+        print(f"Unexpected error occurred: {e}")
+        await ctx.send(f"An unexpected error occurred while adding roles: {e}.")
 
 
 # function that adds all roles to the guild if guild doesn't have it
@@ -187,7 +186,8 @@ async def add_roles_to_guild(guild):
 @bot.command(name='commands')
 async def commands(ctx):
     # List all available commands
-    command_list = [command.name for command in bot.commands]
+    admin_commands = ['addL', 'remL']
+    command_list = [command.name for command in bot.commands if command.name not in admin_commands]
     await ctx.send(f"Available commands: {', '.join(command_list)}")
 
 
