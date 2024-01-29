@@ -140,7 +140,20 @@ async def on_guild_join(guild):
     await add_roles_to_guild(guild)
 
 
+class NotOwner(commands.CheckFailure):
+    ...
+
+
+def is_owner():
+    async def predicate(ctx):
+        if ctx.author.id != ctx.guild.owner_id:
+            raise NotOwner("Hey you are not the owner")
+        return True
+    return commands.check(predicate)
+
+
 @bot.command(name="remL", help="For admin to easily remove all user roles related to Lingo Bot.")
+@is_owner()
 async def remove_roles(ctx):
     try:
         # Remove all the lingo roles from the guild
@@ -157,7 +170,14 @@ async def remove_roles(ctx):
         print(f"unexpected error occurred: {e}")
 
 
+@remove_roles.error
+async def remove_roles_error(ctx, error):
+    if isinstance(error, NotOwner):
+        await ctx.send("Permission denied.")
+
+
 @bot.command(name="addL", help="For admin to easily add all user roles related to Lingo Bot.")
+@is_owner()
 async def add_roles(ctx):
     try:
         await add_roles_to_guild(ctx.guild)
@@ -165,6 +185,12 @@ async def add_roles(ctx):
     except Exception as e:
         print(f"Unexpected error occurred: {e}")
         await ctx.send(f"An unexpected error occurred while adding roles: {e}.")
+
+
+@add_roles.error
+async def add_roles_error(ctx, error):
+    if isinstance(error, NotOwner):
+        await ctx.send("Permission denied.")
 
 
 # function that adds all roles to the guild if guild doesn't have it
