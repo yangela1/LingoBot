@@ -53,6 +53,10 @@ async def on_ready():
     for guild in bot.guilds:
         print(f' - {guild.name} ({guild.id})')
 
+        # Ensure bot role is at the top
+        bot_role = guild.get_role(bot.user.id)
+        if bot_role:
+            await bot_role.edit(position=guild.roles[0].position + 1)
 
 # register user upon using bot command
 @bot.event
@@ -136,10 +140,32 @@ async def on_guild_join(guild):
     await add_roles_to_guild(guild)
 
 
-@bot.event
-async def on_guild_remove(guild):
-    pass
-    # remove all the lingo roles from the guild
+@bot.command(name="remL", help="For server owner to easily remove all user roles related to Lingo Bot.")
+async def remove_roles(ctx):
+    try:
+        # Remove all the lingo roles from the guild
+        roles_to_remove = [role for role in ctx.guild.roles if "Lingo" in role.name and "Lingo Bot" != role.name]
+        # print(roles_to_remove)
+
+        for role in roles_to_remove:
+            try:
+                await role.delete()
+            except Exception as e:
+                print(f"Error removing role {role.name}: {e}")
+
+        await ctx.send("Removed all `user` roles related to `LingoBot` from this server.")
+    except commands.errors.NotOwner:
+        await ctx.send("You must be the server owner to use this command.")
+    except Exception as e:
+        print(f"unexpected error occurred: {e}")
+
+
+@bot.command(name="addL", help="For server owner to easily add all user roles related to Lingo Bot.")
+async def add_roles(ctx):
+
+    await add_roles_to_guild(ctx.guild)
+    await ctx.send("All `user` roles related to `LingoBot` added to this server.")
+
 
 
 # function that adds all roles to the guild if guild doesn't have it
@@ -163,5 +189,6 @@ async def commands(ctx):
     # List all available commands
     command_list = [command.name for command in bot.commands]
     await ctx.send(f"Available commands: {', '.join(command_list)}")
+
 
 bot.run(TOKEN)
