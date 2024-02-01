@@ -197,3 +197,15 @@ async def view_dictionary(ctx):
 async def view_roles(ctx):
     embed = role_embed(ctx)
     await ctx.send(embed=embed)
+
+
+@bot.command(name="lives")
+async def get_lives(ctx):
+    user_id = ctx.author.id
+    guild_id = ctx.guild.id
+    try:
+        silver, gold, lives = get_lives_and_coins(guild_id, user_id)
+        life_message = f"**{ctx.author.name}**, you have {lives} lives remaining."
+        await ctx.send(life_message)
+    except Exception as e:
+        logger.error(f"error occurred: {e}")
