@@ -45,7 +45,7 @@ def stat_embed(ctx, total, percentage, challenges, correct_guesses):
 
 
 # function that returns the embed for user profile
-def profile_embed(ctx, lives, silver, gold, total, percentage, challenges, correct_guesses, languages):
+def profile_embed(ctx, lives, silver, gold, total, percentage, challenges, correct_guesses, languages, role_badge=None):
     embed = discord.Embed()
     embed.title = f""
     embed.description = ""
@@ -58,6 +58,14 @@ def profile_embed(ctx, lives, silver, gold, total, percentage, challenges, corre
                                          f"**Score(correct guesses)**: {correct_guesses}\n"  
                                          f"**Challenges complete**: {challenges}", inline=False)
     embed.color = 0x77DD77
+    if role_badge:
+        # extract id
+        emoji_id = role_badge.split(":")[-1].split(">")[0]
+
+        # Construct the URL for the custom emoji
+        emoji_url = f"https://cdn.discordapp.com/emojis/{emoji_id}.png"
+        embed.set_thumbnail(url=emoji_url)
+
 
     # show language and word count if > 0
     embed.add_field(name="\u200B", value="", inline=False)

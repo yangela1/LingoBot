@@ -10,6 +10,7 @@ from embeds import profile_embed
 from embeds import leaderboard_embed
 from embeds import role_embed
 from PaginationView import PaginationView
+from LingoRoles import lingo_roles
 
 # Configure the logger
 logging.basicConfig(level=logging.ERROR, filename='bot_errors.log', filemode='a',
@@ -123,7 +124,17 @@ async def view_profile(ctx):
         total, percentage, challenges, correct_guesses = check_stat(guild_id, user_id)
         silver, gold, lives = get_lives_and_coins(guild_id, user_id)
         word_count = check_words_learned(guild_id, user_id)
-        embed = profile_embed(ctx, lives, silver, gold, total, percentage, challenges, correct_guesses, word_count)
+
+        # check to see if they have a role
+        member = ctx.author
+        lingo_role_names = [role.name for role in member.roles if "lingo" in role.name.lower()]
+
+        if lingo_role_names:
+            lingo_role_name = lingo_role_names[0]
+            emoji_value = lingo_roles.get(lingo_role_name, {}).get("emoji", None)
+            embed = profile_embed(ctx, lives, silver, gold, total, percentage, challenges, correct_guesses, word_count, emoji_value)
+        else:
+            embed = profile_embed(ctx, lives, silver, gold, total, percentage, challenges, correct_guesses, word_count)
 
         await ctx.send(embed=embed)
     except Exception as e:
@@ -209,3 +220,5 @@ async def get_lives(ctx):
         await ctx.send(life_message)
     except Exception as e:
         logger.error(f"error occurred: {e}")
+
+
