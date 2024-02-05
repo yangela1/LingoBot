@@ -1,6 +1,7 @@
 import discord
 from MyView import MyView
 from LingoRoles import lingo_roles
+from GameConstants import GameConstants
 
 
 # function to show question
@@ -193,4 +194,39 @@ def role_embed(ctx):
 
     embed.set_footer(text="Check your score using $stat or $profile\n"
                           "Check the leaderboard in your server using $lead")
+    return embed
+
+
+def k_embed(ctx, silver, gold):
+    embed = discord.Embed()
+    embed.color = discord.Color.dark_purple()
+    embed.title = f"Currency Guide and Shop Commands"
+    s = "<:silver:1191744440113569833>"
+    g = "<:gold:1191744402222223432>"
+    # intro to kiwi currency
+    embed.description = (f"There are two types of kiwi currency: green {s} and gold {g}.\n"
+                         f"You can earn kiwis by playing games. "
+                         f"Normal mode rewards grant you {GameConstants.PLAY_W_SILVER} {s}. "
+                         f"Challenge mode rewards grant you {GameConstants.CHAL_W_SILVER} {s} and {GameConstants.CHAL_W_GOLD} {g}.")
+
+    embed.add_field(name="", value="\u200b", inline=False)
+    # user's balance
+    embed.add_field(name="Your Kiwi Balance", value=f"**{ctx.author.name}**, you have {silver} {s} and {gold} {g}!", inline=False)
+    embed.add_field(name="", value="\u200b", inline=False)
+
+    # game powerup section
+    game_powerup_messages = (f"Note: Use these commands while a game is running and before timer runs out.\n"
+                             f"- `$hint`: receive a hint (Cost: {GameConstants.PLAY_HINT_SILVERCOST} {s} for normal mode, {GameConstants.CHAL_HINT_SILVERCOST} {s} for challenge mode)\n"
+                             f"- `$pass`: skips current word and starts a new game (Cost: {GameConstants.PASS_SILVERCOST} {s} all game modes)\n")
+    embed.add_field(name="Game Powerups 💪", value=game_powerup_messages, inline=False)
+
+    # buy lives section
+    buy_life_message = (f"Note: Lives regen over time and the max lives you can have is {GameConstants.MAX_LIVES}.\n"
+                        f"- `$buylife`: buy an extra life (Cost: {GameConstants.HEART_GOLDCOST} {g})")
+    embed.add_field(name="Buy Lives ❤️", value=buy_life_message, inline=False)
+
+    # other features section
+    other_features_message = (f"- `$gamble <amount>`: try your luck to win (or lose) bonus {s} kiwis\n"
+                              f"")
+    embed.add_field(name="Other 🎲", value=other_features_message, inline=False)
     return embed

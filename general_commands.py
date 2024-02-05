@@ -5,10 +5,7 @@ import datetime
 from discord.ext import commands
 from database import userCollection
 from game_commands import get_lives_and_coins
-from embeds import stat_embed
-from embeds import profile_embed
-from embeds import leaderboard_embed
-from embeds import role_embed
+from embeds import role_embed, k_embed, leaderboard_embed, profile_embed, stat_embed
 from PaginationView import PaginationView
 from LingoRoles import lingo_roles
 
@@ -221,4 +218,12 @@ async def get_lives(ctx):
     except Exception as e:
         logger.error(f"error occurred: {e}")
 
+
+@bot.command(name="k")
+async def get_k_help(ctx):
+    user_id = ctx.author.id
+    guild_id = ctx.guild.id
+    silver, gold, lives = get_lives_and_coins(guild_id, user_id)
+    embed = k_embed(ctx, silver, gold)
+    await ctx.send(embed=embed)
 

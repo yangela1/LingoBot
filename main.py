@@ -45,6 +45,8 @@ bot.add_command(general_commands.view_leaderboard)
 bot.add_command(general_commands.view_dictionary)
 bot.add_command(general_commands.view_roles)
 bot.add_command(general_commands.get_lives)
+bot.add_command(general_commands.get_k_help)
+
 
 # this is called when bot is ready to start being used
 @bot.event
