@@ -129,7 +129,8 @@ async def view_profile(ctx):
         if lingo_role_names:
             lingo_role_name = lingo_role_names[0]
             emoji_value = lingo_roles.get(lingo_role_name, {}).get("emoji", None)
-            embed = profile_embed(ctx, lives, silver, gold, total, percentage, challenges, correct_guesses, word_count, emoji_value)
+            embed = profile_embed(ctx, lives, silver, gold, total, percentage, challenges, correct_guesses, word_count,
+                                  emoji_value)
         else:
             embed = profile_embed(ctx, lives, silver, gold, total, percentage, challenges, correct_guesses, word_count)
 
@@ -184,7 +185,7 @@ def get_words_learned(guild_id, user_id):
 
     words_list = []
     for lst in [english_words, modified_spanish_words, modified_french_words, modified_german_words,
-                 modified_italian_words, modified_swedish_words]:
+                modified_italian_words, modified_swedish_words]:
         words_list.extend(lst)
     return words_list
 
@@ -226,4 +227,3 @@ async def get_k_help(ctx):
     silver, gold, lives = get_lives_and_coins(guild_id, user_id)
     embed = k_embed(ctx, silver, gold)
     await ctx.send(embed=embed)
-

@@ -8,4 +8,5 @@ class GameConstants:
     HEART_GOLDCOST = 1
     MAX_LIVES = 3
     PASS_SILVERCOST = 3
+    RESET_HEARTS_SECONDS = 6 * 3600
 

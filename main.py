@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import discord
 import logging
 
@@ -84,6 +86,9 @@ async def on_message(message):
         # then check if user exists within the guild
         existing_user = userCollection.find_one({"guild_id": user_guild_id, f"users.{user_id}": {"$exists": True}})
 
+        # refresh user hearts
+        game_commands.reset_lives(user_guild_id, user_id)
+
         if not existing_user:
             # if user is not reg, register them to database
             register_user(user_id, user_name, user_guild_id, user_guild)
@@ -120,7 +125,8 @@ def register_user(uid, name, guildid, guildname):
         "wrong_words": [],
         "correct_guess": 0,
         "incorrect_guess": 0,
-        "chal_complete": 0
+        "chal_complete": 0,
+        "last_reset_time": None
 
     }
     # insert new user into users

@@ -118,7 +118,7 @@ def leaderboard_embed(ctx, users_guesses, current_time):
 def wotd_embed(ctx, word, definition, current_date, image_url=None, url=None, photographer=None):
     footer_text = "Learn a new word every day with $wotd!"
     embed = discord.Embed()
-    embed.title = f"📚 Word of the day ({current_date}) ✨"
+    embed.title = f"📚 Word of the day ({current_date}) "
     embed.set_author(name=ctx.bot.user.name, icon_url=ctx.bot.user.avatar.url)
     embed.add_field(name='\u0020', value="")
     embed.add_field(name=f"`{word}`: {definition}", value="", inline=False)
@@ -130,6 +130,7 @@ def wotd_embed(ctx, word, definition, current_date, image_url=None, url=None, ph
     else:
         footer_content = footer_text
     embed.color = discord.Color.blurple()
+    embed.add_field(name="", value="\u200b", inline=False)
     embed.set_footer(text=footer_content)
     return embed
 
@@ -148,7 +149,7 @@ def dictionary_embed(ctx, data, current_page, total_pages):
     embed = discord.Embed()
     embed.title = f"🧠 {ctx.author.name}'s word bank 🧠"
     embed.description = ("Use `$def <word>` to get the definition, <word> must be in English.\n"
-                         "Use `$trl <word(s)> <source language>` to get the English translation.\n\n"
+                         "Use `$trl <word> <source language>` to get the English translation.\n\n"
                          "Here's a list of words you've mastered so far:")
     embed.add_field(name='\u0020', value="")
     embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)

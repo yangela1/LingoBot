@@ -678,12 +678,23 @@ def store_word_def(words_collection, word, definition, language=None, translatio
 def increment(users_collection, guild_id, user_id, field, amount):
     result = users_collection.find_one({"guild_id": guild_id, f"users.{user_id}": {"$exists": True}})
 
-    # $inc operator in MongoDB is used to increment value of a field
-    update_query = {
-        "$inc": {
-            f"users.{user_id}.{field}": amount
+    if field == "hearts":
+        update_query = {
+            "$inc": {
+                f"users.{user_id}.{field}": amount,
+            },
+            "$set": {
+                f"users.{user_id}.last_reset_time": datetime.datetime.utcnow()
+            }
         }
-    }
+        print("\tupdated last reset time")
+    else:
+        # $inc operator in MongoDB is used to increment value of a field
+        update_query = {
+            "$inc": {
+                f"users.{user_id}.{field}": amount
+            }
+        }
 
     try:
         result = users_collection.update_one(result, update_query)
@@ -1000,7 +1011,7 @@ async def update_role_based_on_score(ctx, guild_id, user_id):
 @bot.command(name="trl")
 async def get_translation(ctx, *, args: str = ""):
     ip = "Invalid input."
-    error_input_message = ("Use `$trl <word(s)> <source language>` to get the English translation.\n"
+    error_input_message = ("Use `$trl <word> <source language>` to get the English translation.\n"
                            "e.g. `$trl merci french`")
 
     # Check if the user provided any arguments
@@ -1009,6 +1020,11 @@ async def get_translation(ctx, *, args: str = ""):
         return
 
     words = args.split()
+
+    # Check if the user provided only one argument
+    if len(words) == 1:
+        await ctx.send(f"{ip} {error_input_message}")
+        return
 
     # Check if the word contains any digits or special characters
     special_characters = set(")(*&^%$#@!")
@@ -1041,4 +1057,37 @@ async def get_translation(ctx, *, args: str = ""):
         await ctx.send(f"`{word_to_translate}` in {source_language.capitalize()} is `{english_translation}` in English.")
     else:
         await ctx.send(f"{error_message}\n{error_input_message}")
+
+
+# function to reset lives
+def reset_lives(guild_id, user_id):
+    last_reset_time, lives = get_last_reset_time_and_hearts(guild_id, user_id)
+    now = datetime.datetime.utcnow()
+    time_diff = (now - last_reset_time).total_seconds()
+
+    print(f"time diff: {time_diff} seconds")
+
+    if lives < GameConstants.MAX_LIVES:
+        # reset one life every 6 hours
+        if time_diff >= (GameConstants.RESET_HEARTS_SECONDS * 3):
+            amount_to_refill = min(3, GameConstants.MAX_LIVES - lives)
+        elif time_diff >= (GameConstants.RESET_HEARTS_SECONDS * 2):
+            amount_to_refill = min(2, GameConstants.MAX_LIVES - lives)
+        elif time_diff >= GameConstants.RESET_HEARTS_SECONDS:
+            amount_to_refill = 1
+
+        increment(userCollection, guild_id, user_id, "hearts", amount_to_refill)
+
+
+def get_last_reset_time_and_hearts(guild_id, user_id):
+    try:
+        result = userCollection.find_one({"guild_id": guild_id, f"users.{user_id}": {"$exists": True}})
+        user_data = result["users"].get(str(user_id), {})
+        last_reset_time = user_data.get("last_reset_time", None)
+        lives = user_data.get("hearts", None)
+        print(f"last reset time: {last_reset_time}")
+        print(f"hearts: {lives}")
+        return last_reset_time, lives
+    except Exception as e:
+        print(f"couldn't find last_reset_time {e}")
 
