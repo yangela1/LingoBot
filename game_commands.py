@@ -62,7 +62,7 @@ translate_headers = {
     "content-type": "application/x-www-form-urlencoded",
 }
 
-pexel_headers ={
+pexel_headers = {
     "Authorization": os.getenv("PEXELS_KEY")
 }
 
@@ -111,8 +111,7 @@ async def new_game(ctx):
 
     if res:
         print("timeout")
-        view.correct_or_not = 'N'   # set to incorrect
-
+        view.correct_or_not = 'N'  # set to incorrect
 
     # update words collection with word + def
     store_word_def(wordCollection, word, corDef)
@@ -396,10 +395,12 @@ async def get_hint(ctx):
     silver, gold, lives = get_lives_and_coins(guild_id, user_id)
 
     if is_challenge and silver < GameConstants.CHAL_HINT_SILVERCOST:
-        await ctx.send(f"You do not have enough coins. A challenge hint costs {GameConstants.CHAL_HINT_SILVERCOST} <:silver:1191744440113569833>.")
+        await ctx.send(
+            f"You do not have enough coins. A challenge hint costs {GameConstants.CHAL_HINT_SILVERCOST} <:silver:1191744440113569833>.")
         return
     elif not is_challenge and silver < GameConstants.PLAY_HINT_SILVERCOST:
-        await ctx.send(f"You do not have enough coins. A play hint costs {GameConstants.PLAY_HINT_SILVERCOST} <:silver:1191744440113569833>.")
+        await ctx.send(
+            f"You do not have enough coins. A play hint costs {GameConstants.PLAY_HINT_SILVERCOST} <:silver:1191744440113569833>.")
         return
 
     # determine which word to display based on game mode
@@ -585,7 +586,6 @@ async def gamble_coin(ctx, *, input_str: str = ""):
 
 # function that stores word into user collection
 def store_word_users(users_collection, guild_id, user_id, language, word):
-
     # attempt to get user's data
     result = users_collection.find_one({"guild_id": guild_id, f"users.{user_id}": {"$exists": True}})
 
@@ -1033,7 +1033,7 @@ async def get_translation(ctx, *, args: str = ""):
         return
 
     source_language = words[-1]
-    source_words = words[0:-1]     # a list
+    source_words = words[0:-1]  # a list
 
     word_to_translate = " ".join(source_words)
     print(word_to_translate)
@@ -1054,7 +1054,8 @@ async def get_translation(ctx, *, args: str = ""):
         else:
             english_translation = translate_word(word_to_translate, code, "en")
             print(f"not found in db. translated word to english is: {english_translation}")
-        await ctx.send(f"`{word_to_translate}` in {source_language.capitalize()} is `{english_translation}` in English.")
+        await ctx.send(
+            f"`{word_to_translate}` in {source_language.capitalize()} is `{english_translation}` in English.")
     else:
         await ctx.send(f"{error_message}\n{error_input_message}")
 
@@ -1067,15 +1068,17 @@ def reset_lives(guild_id, user_id):
 
     print(f"time diff: {time_diff} seconds")
 
-    if lives < GameConstants.MAX_LIVES:
-        # reset one life every 6 hours
-        if time_diff >= (GameConstants.RESET_HEARTS_SECONDS * 3):
-            amount_to_refill = min(3, GameConstants.MAX_LIVES - lives)
-        elif time_diff >= (GameConstants.RESET_HEARTS_SECONDS * 2):
-            amount_to_refill = min(2, GameConstants.MAX_LIVES - lives)
-        elif time_diff >= GameConstants.RESET_HEARTS_SECONDS:
-            amount_to_refill = 1
+    # reset one life every 6 hours
+    if time_diff >= (GameConstants.RESET_HEARTS_SECONDS * 3):
+        amount_to_refill = min(3, GameConstants.MAX_LIVES - lives)
+    elif time_diff >= (GameConstants.RESET_HEARTS_SECONDS * 2):
+        amount_to_refill = min(2, GameConstants.MAX_LIVES - lives)
+    elif time_diff >= GameConstants.RESET_HEARTS_SECONDS:
+        amount_to_refill = 1
+    else:
+        amount_to_refill = 0
 
+    if amount_to_refill > 0:
         increment(userCollection, guild_id, user_id, "hearts", amount_to_refill)
 
 
@@ -1090,4 +1093,3 @@ def get_last_reset_time_and_hearts(guild_id, user_id):
         return last_reset_time, lives
     except Exception as e:
         print(f"couldn't find last_reset_time {e}")
-

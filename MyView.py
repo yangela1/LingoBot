@@ -47,7 +47,7 @@ class MyView(discord.ui.View):
             await interaction.response.edit_message(view=self)
             await interaction.followup.send(f"Incorrect :( the correct answer is {button_emoji}\n"
                                             f"{self.chal_message if self.challenge else ''}" 
-                                            f"**{self.ctx.author.name}** -1 heart")
+                                            f"**{self.ctx.author.name}** -1 ❤️")
             self.correct_or_not = "N"
             self.stop()
 
@@ -58,7 +58,7 @@ class MyView(discord.ui.View):
         await self.ctx.send(f"Timeout! {self.ctx.author.mention}\n"
                             f"The correct answer is {button_emoji}\n"
                             f"{self.chal_message if self.challenge else ''}"
-                            f"**{self.ctx.author.name}** -1 heart")
+                            f"**{self.ctx.author.name}** -1 ❤️")
 
         self.disable_buttons()
         await self.message.edit(view=self)

@@ -7,7 +7,7 @@ from GameConstants import GameConstants
 # function to show question
 def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, silver, gold, correct_index, challenge,
                       language=None, translation=None):
-    stuck_message = f"stuck? use a $hint or $pass the word"
+    stuck_message = f"stuck? use a $hint or $pass"
     embed = discord.Embed()
     if language:
         embed.title = f"Guess the meaning of this word"
@@ -20,9 +20,13 @@ def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, silver
     embed.set_author(name="", icon_url="")
     embed.set_image(url="")
     embed.add_field(name="Options:", value=f"1️⃣ {descr1}\n\n2️⃣ {descr2}\n\n3️⃣ {descr3}", inline=False)
+    if remaining_lives > 0:
+        heart_emoji = "❤️ " * remaining_lives
+    else:
+        heart_emoji = "0"
     embed.add_field(name="", value=f"Kiwis: {silver} <:silver:1191744440113569833>"
     # f" {gold} <:gold:1191744402222223432>"
-                                   f"\nLives: {remaining_lives}")
+                                   f"\nLives: {heart_emoji}")
     embed.set_footer(text=stuck_message)
 
     view = MyView(ctx, correct_index, challenge, word, translation)
@@ -51,7 +55,11 @@ def profile_embed(ctx, lives, silver, gold, total, percentage, challenges, corre
     embed.title = f""
     embed.description = ""
     embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
-    embed.add_field(name="\u200B", value=f"**Lives**: {lives}", inline=False)
+    if lives > 0:
+        heart_emoji = "❤️ " * lives
+    else:
+        heart_emoji = "0"
+    embed.add_field(name="\u200B", value=f"**Lives**: {heart_emoji}", inline=False)
     embed.add_field(name="Kiwis:", value=f"**{silver}** <:silver:1191744440113569833>  "
                                          f"**{gold}** <:gold:1191744402222223432>", inline=False)
     embed.add_field(name="\u200B", value=f"**Total plays**: {total}\n"

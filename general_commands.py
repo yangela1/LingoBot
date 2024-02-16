@@ -214,7 +214,11 @@ async def get_lives(ctx):
     guild_id = ctx.guild.id
     try:
         silver, gold, lives = get_lives_and_coins(guild_id, user_id)
-        life_message = f"**{ctx.author.name}**, you have {lives} lives remaining."
+        if lives > 0:
+            hearts = "❤️ " * lives
+        else:
+            hearts = "0 lives"
+        life_message = f"**{ctx.author.name}**, you have {hearts} remaining."
         await ctx.send(life_message)
     except Exception as e:
         logger.error(f"error occurred: {e}")
