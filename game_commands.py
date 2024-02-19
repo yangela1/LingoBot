@@ -502,20 +502,29 @@ async def get_word_definition(ctx, *, args: str = ""):
         await ctx.send(error_message)
         return
 
-    # first check if the word definition is stored in the database before fetching
-    existing_word = wordCollection.find_one({"word": word})
-
-    if existing_word:
-        definition = existing_word.get("definition")
-        print(f"found in db. the definition of {word} is {definition}")
-    else:
-        definition = get_def(word)
+    definition = get_def_first_check_database(word)
 
     if definition:
         await ctx.send(f"Definition of `{word}`: {definition}")
     else:
         await ctx.send(f"Kiwi is confused and was unable to retrieve the definition for `{word}`.")
 
+
+def get_def_first_check_database(word):
+    # first check if the word definition is stored in the database before fetching
+    existing_word = wordCollection.find_one({"$or": [{"word": word}, {"translation":word}]})
+
+    if existing_word:
+        definition = existing_word.get("definition")
+        print(f"found in db. the definition of {word} is {definition}")
+    else:
+        definition = get_def(word)
+    if definition:
+        print(f"Definition of `{word}`: {definition}")
+    else:
+        print(f"Kiwi is confused and was unable to retrieve the definition for `{word}`.")
+
+    return definition
 
 @bot.command(name="gamble")
 async def gamble_coin(ctx, *, input_str: str = ""):
@@ -661,7 +670,8 @@ def store_word_def(words_collection, word, definition, language=None, translatio
         }
 
         if translation is not None:
-            new_word_def_data[language] = translation
+            new_word_def_data["translation"] = translation
+            new_word_def_data["language"] = language
 
         # insert new word into the collection
         result = words_collection.insert_one(new_word_def_data)
@@ -1093,3 +1103,25 @@ def get_last_reset_time_and_hearts(guild_id, user_id):
         return last_reset_time, lives
     except Exception as e:
         print(f"couldn't find last_reset_time {e}")
+
+
+@bot.command(name="r")
+# requiz
+async def get_requiz_question(ctx):
+    wrong_word = get_wrong_words(ctx.guild.id, ctx.author.id)
+    deaf = get_def_first_check_database(wrong_word)
+
+    # implement question logic
+    await ctx.send("r")
+
+
+def get_wrong_words(guild_id, user_id):
+    try:
+        result = userCollection.find_one({"guild_id": guild_id, f"users.{user_id}": {"$exists": True}})
+        user_data = result["users"].get(str(user_id), {})
+        wrong_words = user_data.get("wrong_words", {})
+        random_word = random.choice(wrong_words)
+        print(f"random word: {random_word}")
+        return random_word
+    except Exception as e:
+        print(f"couldn't return a random word from user's wrong_words {e}")
