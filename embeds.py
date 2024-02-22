@@ -6,7 +6,7 @@ from GameConstants import GameConstants
 
 # function to show question
 def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, silver, gold, correct_index, challenge,
-                      language=None, translation=None):
+                      requiz=False, language=None, translation=None):
     stuck_message = f"stuck? use a $hint or $pass"
     embed = discord.Embed()
     if language:
@@ -14,9 +14,14 @@ def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, silver
         embed.description = f"**`{translation}`** _({language})_"
         embed.color = discord.Color.dark_green()
     else:
-        embed.title = "Guess the meaning of this word"
-        embed.description = f"**`{word}`**"
-        embed.color = 0xfffd78
+        if requiz:
+            embed.title = "Re-quiz! Guess the meaning of this word"
+            embed.description = f"**`{word}`**"
+            embed.color = discord.Color.dark_purple()
+        else:
+            embed.title = "Guess the meaning of this word"
+            embed.description = f"**`{word}`**"
+            embed.color = 0xfffd78
     embed.set_author(name="", icon_url="")
     embed.set_image(url="")
     embed.add_field(name="Options:", value=f"1️⃣ {descr1}\n\n2️⃣ {descr2}\n\n3️⃣ {descr3}", inline=False)
@@ -29,7 +34,7 @@ def interactive_embed(ctx, word, descr1, descr2, descr3, remaining_lives, silver
                                    f"\nLives: {heart_emoji}")
     embed.set_footer(text=stuck_message)
 
-    view = MyView(ctx, correct_index, challenge, word, translation)
+    view = MyView(ctx, correct_index, challenge, word, translation, requiz)
 
     return embed, view
 

@@ -3,7 +3,7 @@ from GameConstants import GameConstants
 
 
 class MyView(discord.ui.View):
-    def __init__(self, ctx, correct_index, challenge=False, current_word=None, current_translated_word=None):
+    def __init__(self, ctx, correct_index, challenge=False, current_word=None, current_translated_word=None, requiz=None):
         super().__init__(timeout=30)
         self.ctx = ctx
         self.correct_index = correct_index
@@ -19,6 +19,7 @@ class MyView(discord.ui.View):
         self.current_word = current_word
         self.current_translated_word = current_translated_word
         self.chal_message = f"`{self.current_translated_word}` in English is `{self.current_word}`.\n"
+        self.requiz = requiz
 
     # function that handles button clicks
     async def handle_button_click(self, interaction, button, button_id):
@@ -36,9 +37,9 @@ class MyView(discord.ui.View):
             await interaction.response.edit_message(view=self)
             await interaction.followup.send(f"Correct! `{self.current_translated_word if self.challenge else self.current_word}` has been added to **{self.ctx.author.name}**'s personal word bank! ($mywords) \n"
                                             f"{self.chal_message if self.challenge else ''}"
-                                            f"**{self.ctx.author.name}** +{GameConstants.CHAL_W_SILVER if self.challenge else GameConstants.PLAY_W_SILVER} "
+                                            f"**{self.ctx.author.name}** +{GameConstants.CHAL_W_SILVER if self.challenge and not self.requiz else GameConstants.PLAY_W_SILVER} "
                                             f"<:silver:1191744440113569833>"
-                                            f"{', +' + str(GameConstants.CHAL_W_GOLD) + ' <:gold:1191744402222223432>' if self.challenge else ''}")
+                                            f"{', +' + str(GameConstants.CHAL_W_GOLD) + ' <:gold:1191744402222223432>' if self.challenge and not self.requiz else ''}")
             self.correct_or_not = "Y"
             self.stop()
         else:

@@ -178,6 +178,7 @@ async def new_challenge(ctx):
 
     global current_word
     current_word = word  # set global word
+    print(f"word: {word}")
 
     global current_translated_word
     current_translated_word = translation  # set global translated word
@@ -186,9 +187,11 @@ async def new_challenge(ctx):
     corDef = question["def_options"][f"option{correct_index + 1}"]
     # print(f"cordef {corDef}")
 
+    print(f"langueage: {language}")
     embed, view = interactive_embed(ctx, current_word, question["def_options"]["option1"],
                                     question["def_options"]["option2"], question["def_options"]["option3"],
-                                    lives, silver, gold, correct_index, True, language, current_translated_word)
+                                    lives, silver, gold, correct_index, True, language=language,
+                                    translation=current_translated_word)
     print(question)
 
     current_view = view  # set global view
@@ -387,6 +390,11 @@ async def get_hint(ctx):
         await ctx.send("You can only use hints if you started the game.")
         return
 
+    # check if it is a requiz
+    if current_view.requiz is not None:
+        await ctx.send("You cannot use a hint in a re-quiz.")
+        return
+
     # check if user has enough coins
     is_challenge = current_view.challenge
 
@@ -434,7 +442,7 @@ def get_lives_and_coins(guild_id, user_id):
 
 
 # function to create questions
-def generate_question():
+def generate_question(word=None, definition=None):
     max_attempts = 5
     attempt = 0
 
@@ -447,6 +455,10 @@ def generate_question():
         def_in_question = get_def(word_in_question)  # grab definition of those words
         other_def1 = get_def(word_for_def1)
         other_def2 = get_def(word_for_def2)
+
+        if word is not None and definition is not None:
+            word_in_question = word
+            def_in_question = definition
 
         definitions = [def_in_question, other_def1, other_def2]
 
@@ -502,7 +514,7 @@ async def get_word_definition(ctx, *, args: str = ""):
         await ctx.send(error_message)
         return
 
-    definition = get_def_first_check_database(word)
+    definition, language = get_def_first_check_database(word)
 
     if definition:
         await ctx.send(f"Definition of `{word}`: {definition}")
@@ -512,19 +524,22 @@ async def get_word_definition(ctx, *, args: str = ""):
 
 def get_def_first_check_database(word):
     # first check if the word definition is stored in the database before fetching
-    existing_word = wordCollection.find_one({"$or": [{"word": word}, {"translation":word}]})
+    existing_word = wordCollection.find_one({"$or": [{"word": word}, {"translation": word}]})
 
     if existing_word:
         definition = existing_word.get("definition")
+        language = existing_word.get("language", None)
+        english_word = existing_word.get("word")
         print(f"found in db. the definition of {word} is {definition}")
     else:
         definition = get_def(word)
+        language = None
     if definition:
         print(f"Definition of `{word}`: {definition}")
     else:
         print(f"Kiwi is confused and was unable to retrieve the definition for `{word}`.")
 
-    return definition
+    return definition, language, english_word
 
 @bot.command(name="gamble")
 async def gamble_coin(ctx, *, input_str: str = ""):
@@ -766,6 +781,11 @@ async def pass_word_command(ctx):
     # check if user running command is the same user who started the game
     if ctx.author.id != game_starter:
         await ctx.send("You can only use a pass if you started the game.")
+        return
+
+    # check if requiz
+    if current_view.requiz is not None:
+        await ctx.send("You cannot pass during a re-quiz.")
         return
 
     # get gold and lives from database
@@ -1108,11 +1128,85 @@ def get_last_reset_time_and_hearts(guild_id, user_id):
 @bot.command(name="r")
 # requiz
 async def get_requiz_question(ctx):
-    wrong_word = get_wrong_words(ctx.guild.id, ctx.author.id)
-    deaf = get_def_first_check_database(wrong_word)
+    # check if a game is already in session
+    global current_view, game_starter
+    game_starter = ctx.author.id
 
-    # implement question logic
-    await ctx.send("r")
+    if current_view and not current_view.stopped:
+        await ctx.send("A game is already in process. Finish the current game.")
+        return
+
+    user_id = ctx.author.id
+    guild_id = ctx.guild.id
+
+    # check if user has 1 or more lives
+    silver, gold, lives = get_lives_and_coins(guild_id, user_id)
+
+    if lives < 1:
+        await ctx.send(f"**{ctx.author}**, you have no more lives to play right now.")
+        return
+
+    # grab random wrong word and definition then put it into the question generator
+    wrong_word = get_wrong_words(ctx.guild.id, ctx.author.id)
+    definition, language, english_word = get_def_first_check_database(wrong_word)
+
+    question = generate_question(wrong_word, definition)
+
+    word = question["word"]  # current game word
+
+    which_langauge = "English"
+    word_to_store = word
+
+    # see if the requiz word is a challenge word or not
+    if language:
+        which_langauge = language
+        word_to_store = wrong_word
+        print(f"current translated word: {current_translated_word}")
+
+    correct_index = question["def_options"]["correct_index"]
+    corDef = question["def_options"][f"option{correct_index + 1}"]
+    # print(f"cordef {corDef}")
+
+    embed, view = interactive_embed(ctx, word, question["def_options"]["option1"], question["def_options"]["option2"],
+                                    question["def_options"]["option3"], lives, silver, gold, correct_index,
+                                    challenge=False, requiz=True)
+    print(question)
+
+    current_view = view  # set global view
+
+    message = await ctx.send(embed=embed, view=view)
+    view.message = message
+    res = await view.wait()  # wait for view to stop by timeout or manually stopping
+
+    if res:
+        print("timeout")
+        view.correct_or_not = 'N'  # set to incorrect
+
+    # update user collection
+    ################################
+    if view.correct_or_not == 'Y':
+        print("correct answer guessed, update to db in progress".upper())
+        # get + silvers
+        increment(userCollection, guild_id, user_id, "coins", GameConstants.PLAY_W_SILVER)
+
+        # increment number of correct guesses + 1
+        increment(userCollection, guild_id, user_id, "correct_guess", 1)
+
+        # store the learnt word
+        store_word_users(userCollection, guild_id, user_id, which_langauge, word_to_store)
+
+        # remove word from wrong_words
+        remove_word_from_wrong_words(guild_id, user_id, wrong_word)
+    elif view.correct_or_not == 'N':
+        print("incorrect answer guessed, update to db in progress".upper())
+        # decrement heart - 1
+        increment(userCollection, guild_id, user_id, "hearts", -1)
+
+        # incremenet number of incorrect guesses + 1
+        increment(userCollection, guild_id, user_id, "incorrect_guess", 1)
+
+    # update lingo role
+    await update_role_based_on_score(ctx, guild_id, user_id)
 
 
 def get_wrong_words(guild_id, user_id):
@@ -1123,5 +1217,15 @@ def get_wrong_words(guild_id, user_id):
         random_word = random.choice(wrong_words)
         print(f"random word: {random_word}")
         return random_word
+    except Exception as e:
+        print(f"couldn't return a random word from user's wrong_words {e}")
+
+
+def remove_word_from_wrong_words(guild_id, user_id, word):
+    try:
+        userCollection.update_one(
+            {"guild_id": guild_id},
+            {"$pull": {f"users.{user_id}.wrong_words": word}}
+        )
     except Exception as e:
         print(f"couldn't return a random word from user's wrong_words {e}")
