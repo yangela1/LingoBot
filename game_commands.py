@@ -514,7 +514,7 @@ async def get_word_definition(ctx, *, args: str = ""):
         await ctx.send(error_message)
         return
 
-    definition, language = get_def_first_check_database(word)
+    definition, language, english_word = get_def_first_check_database(word)
 
     if definition:
         await ctx.send(f"Definition of `{word}`: {definition}")
@@ -534,6 +534,7 @@ def get_def_first_check_database(word):
     else:
         definition = get_def(word)
         language = None
+        english_word = word
     if definition:
         print(f"Definition of `{word}`: {definition}")
     else:
@@ -1125,7 +1126,7 @@ def get_last_reset_time_and_hearts(guild_id, user_id):
         print(f"couldn't find last_reset_time {e}")
 
 
-@bot.command(name="r")
+@bot.command(name="requiz")
 # requiz
 async def get_requiz_question(ctx):
     # check if a game is already in session
@@ -1183,7 +1184,6 @@ async def get_requiz_question(ctx):
         view.correct_or_not = 'N'  # set to incorrect
 
     # update user collection
-    ################################
     if view.correct_or_not == 'Y':
         print("correct answer guessed, update to db in progress".upper())
         # get + silvers
@@ -1202,7 +1202,7 @@ async def get_requiz_question(ctx):
         # decrement heart - 1
         increment(userCollection, guild_id, user_id, "hearts", -1)
 
-        # incremenet number of incorrect guesses + 1
+        # increment number of incorrect guesses + 1
         increment(userCollection, guild_id, user_id, "incorrect_guess", 1)
 
     # update lingo role
