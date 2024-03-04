@@ -148,7 +148,7 @@ def wotd_embed(ctx, word, definition, current_date, image_url=None, url=None, ph
     return embed
 
 
-# function that returns the embed for WOTD
+# function that returns the embed for image
 def image_embed(word, image_url, url, photographer):
     embed = discord.Embed()
     embed.title = word
@@ -244,3 +244,19 @@ def k_embed(ctx, silver, gold):
                               f"")
     embed.add_field(name="Other 🎲", value=other_features_message, inline=False)
     return embed
+
+
+def help_embed(ctx):
+    embed = discord.Embed()
+    embed.set_author(name=ctx.bot.user.name, icon_url=ctx.bot.user.avatar.url)
+    embed.color = discord.Color.dark_blue()
+    embed.title = f"How to use and play Lingo Bot!"
+    embed.description = (f"LingoBot is a word guessing game complete with fun challenges, rewards, and also"
+                         f"has general word utilities.")
+
+    game_mod_msg = ("Three game modes:\n"
+                    "- `$play`: normal mode\n"
+                    "- `$chal`: hard mode\n"
+                    "- `")
+    embed.add_field(name="", value="", inline=False)
+

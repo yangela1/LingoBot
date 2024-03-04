@@ -5,7 +5,7 @@ import datetime
 from discord.ext import commands
 from database import userCollection
 from game_commands import get_lives_and_coins
-from embeds import role_embed, k_embed, leaderboard_embed, profile_embed, stat_embed
+from embeds import role_embed, k_embed, leaderboard_embed, profile_embed, stat_embed, help_embed
 from PaginationView import PaginationView
 from LingoRoles import lingo_roles
 
@@ -27,11 +27,9 @@ bot.remove_command('help')
 
 @bot.command(name='help')
 async def help_response(ctx):
-    help_dm = f"How to use LingoBot\n" \
-              f"Commands used:\n" \
-
+    embed = help_embed(ctx)
     try:
-        await ctx.author.send(help_dm)
+        await ctx.author.send(embed)
         await ctx.send(f"sent DM to {ctx.author.mention}")
     except discord.errors.HTTPException as e:
         logger.error(f"Error sending DM to {ctx.author}: {e}")

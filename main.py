@@ -62,6 +62,7 @@ async def on_ready():
         if bot_role:
             await bot_role.edit(position=guild.roles[0].position + 1)
 
+
 # register user upon using bot command
 @bot.event
 async def on_message(message):
