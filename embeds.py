@@ -47,7 +47,7 @@ def stat_embed(ctx, total, percentage, challenges, correct_guesses):
     embed.set_author(name=ctx.author.name, icon_url=ctx.author.avatar.url)
     embed.add_field(name="\u200B", value=f"**Total plays**: {total}\n"
                                          f"**Guess accuracy**: {percentage}\n"
-                                         f"**Score(correct guesses)**: {correct_guesses}\n"          
+                                         f"**Score(correct guesses)**: {correct_guesses}\n"
                                          f"**Challenges complete**: {challenges}", inline=False)
     embed.color = 0x800080
 
@@ -69,7 +69,7 @@ def profile_embed(ctx, lives, silver, gold, total, percentage, challenges, corre
                                          f"**{gold}** <:gold:1191744402222223432>", inline=False)
     embed.add_field(name="\u200B", value=f"**Total plays**: {total}\n"
                                          f"**Guess accuracy**: {percentage}\n"
-                                         f"**Score(correct guesses)**: {correct_guesses}\n"  
+                                         f"**Score(correct guesses)**: {correct_guesses}\n"
                                          f"**Challenges complete**: {challenges}", inline=False)
     embed.color = 0x77DD77
     if role_badge:
@@ -79,7 +79,6 @@ def profile_embed(ctx, lives, silver, gold, total, percentage, challenges, corre
         # Construct the URL for the custom emoji
         emoji_url = f"https://cdn.discordapp.com/emojis/{emoji_id}.png"
         embed.set_thumbnail(url=emoji_url)
-
 
     # show language and word count if > 0
     embed.add_field(name="\u200B", value="", inline=False)
@@ -225,8 +224,11 @@ def k_embed(ctx, silver, gold):
 
     embed.add_field(name="", value="\u200b", inline=False)
     # user's balance
-    embed.add_field(name="Your Kiwi Balance", value=f"**{ctx.author.name}**, you have {silver} {s} and {gold} {g}!", inline=False)
+    embed.add_field(name="Your Kiwi Balance", value=f"**{ctx.author.name}**, you have {silver} {s} and {gold} {g}!",
+                    inline=False)
     embed.add_field(name="", value="\u200b", inline=False)
+
+    embed.add_field(name="Spend your green and gold kiwis by using the following commands:", value="", inline=False)
 
     # game powerup section
     game_powerup_messages = (f"Note: Use these commands while a game is running and before timer runs out.\n"
@@ -246,17 +248,70 @@ def k_embed(ctx, silver, gold):
     return embed
 
 
-def help_embed(ctx):
+def help_embed1(ctx):
     embed = discord.Embed()
     embed.set_author(name=ctx.bot.user.name, icon_url=ctx.bot.user.avatar.url)
-    embed.color = discord.Color.dark_blue()
-    embed.title = f"How to use and play Lingo Bot!"
-    embed.description = (f"LingoBot is a word guessing game complete with fun challenges, rewards, and also"
-                         f"has general word utilities.")
+    embed.color = discord.Color.blue()
+    embed.title = f"How to use LingoBot!"
+    embed.description = (f"LingoBot is a word guessing game complete with fun challenges, rewards, and "
+                         f"general word commands.")
+    s = "<:silver:1191744440113569833>"
+    g = "<:gold:1191744402222223432>"
+    embed.add_field(name="", value="\u200b", inline=False)
 
-    game_mod_msg = ("Three game modes:\n"
-                    "- `$play`: normal mode\n"
-                    "- `$chal`: hard mode\n"
-                    "- `")
+    embed.add_field(name="🎮 PLAY COMMANDS", value="", inline=False)
+    embed.add_field(name=f"$play: normal mode, earn green kiwis {s}", value="", inline=False)
+    embed.add_field(name=f"$chal: hard mode, earn green {s} and gold kiwis {g}", value="", inline=False)
+    embed.add_field(name=f"$requiz: easy mode play a word you guessed incorrectly), earn green {s}", value="")
+
+    embed.add_field(name="", value="\u200b", inline=False)
+    embed.add_field(name=f"{s}CURRENCY GUIDE", value=f"There are two types of kiwi currency: green {s} and gold {g}. You can earn kiwis by playing "
+                    f"games. Spend your kiwis by using the SHOP commands.", inline=False)
+
+    embed.add_field(name="", value="\u200b", inline=False)
+    embed.add_field(name=f"🛒SHOP COMMANDS", value="Use `$k` for more detailed costs", inline=False)
+    embed.add_field(name=f"Game Powerups 💪:", value=f"Note: Use these commands while a game is running and before timer runs out.", inline=False)
+    embed.add_field(name=f"$hint: receive a hint", value="", inline=False)
+    embed.add_field(name=f"$pass: skips current word and starts a new game", value="", inline=False)
     embed.add_field(name="", value="", inline=False)
+    embed.add_field(name=f"Buy Lives ❤️:", value=f"Note: Lives regen over time and the max lives you can have is {GameConstants.MAX_LIVES}.", inline=False)
+    embed.add_field(name=f"$buylife: buy an extra life", value="", inline=False)
+    embed.add_field(name="", value="", inline=False)
+    embed.add_field(name=f"Other 🎲:", value="", inline=False)
+    embed.add_field(name=f"$gamble <amount>: try your luck to win (or lose) bonus {s} kiwis", value="", inline=False)
 
+    return embed
+
+
+def help_embed2(ctx):
+    embed = discord.Embed()
+    embed.color = discord.Color.blue()
+
+    embed.add_field(name=f"🧑PROFILE COMMANDS", value="", inline=False)
+    embed.add_field(name=f"$profile: check your progress, stats, remaining lives, coins, and role", value="", inline=False)
+    embed.add_field(name=f"$stat: view your stats", value="", inline=False)
+    embed.add_field(name=f"$mywords: view your word bank (add more words by playing more games and guessing correctly!", value="", inline=False)
+    embed.add_field(name=f"$lives: view your remaining lives", value="", inline=False)
+
+    embed.add_field(name="", value="\u200b", inline=False)
+    embed.add_field(name="🏆CLIMB THE LADDER", value="", inline=False)
+    embed.add_field(name="$lead: view the leaderboard in the server", value="", inline=False)
+    embed.add_field(name="$roles: view how to earn special roles and badges",value="",inline=False)
+
+    embed.add_field(name="", value="\u200b", inline=False)
+    embed.add_field(name=f"📜WORD COMMANDS", value="", inline=False)
+    embed.add_field(name=f"$wotd: (Word of The Day) learn a new word daily", value="", inline=False)
+    embed.add_field(name=f"$trl <word> <source language>: (the cooler google translate) translate a word from any language into English", value="", inline=False)
+    embed.add_field(name=f"$def <word>: get an English definition of a word", value="", inline=False)
+    embed.add_field(name=f"$img <word>: get a random photo of the word", value="", inline=False)
+
+    embed.add_field(name="", value="\u200b", inline=False)
+
+    embed.add_field(name="🔨UTILITIES", value="Note: for use by server owner")
+    embed.add_field(name="$reml: quickly delete all LingoBot roles from the server", value="",inline=False)
+    embed.add_field(name="$addl: quickly add all LingoBot roles to the server", value="",inline=False)
+    embed.add_field(name="", value="\u200b", inline=False)
+
+    embed.set_footer(icon_url=ctx.bot.user.avatar.url, text="LingoBot")
+
+    return embed

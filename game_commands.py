@@ -259,7 +259,7 @@ def get_code(language):
         target_code = None
         lowercase_language = language.lower()
         for entry in data:
-            if entry["language"].lower() == lowercase_language:
+            if lowercase_language in entry["language"].lower():
                 target_code = entry["code"]
                 break
 
@@ -1149,6 +1149,10 @@ async def get_requiz_question(ctx):
 
     # grab random wrong word and definition then put it into the question generator
     wrong_word = get_wrong_words(ctx.guild.id, ctx.author.id)
+    if not wrong_word:
+        await ctx.send(f"**{ctx.author}**, you have not guessed any words incorrectly. Try another game mode! (`$play` or `$chal`)")
+        return
+
     definition, language, english_word = get_def_first_check_database(wrong_word)
 
     question = generate_question(wrong_word, definition)

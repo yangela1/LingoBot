@@ -5,7 +5,7 @@ import datetime
 from discord.ext import commands
 from database import userCollection
 from game_commands import get_lives_and_coins
-from embeds import role_embed, k_embed, leaderboard_embed, profile_embed, stat_embed, help_embed
+from embeds import role_embed, k_embed, leaderboard_embed, profile_embed, stat_embed, help_embed1, help_embed2
 from PaginationView import PaginationView
 from LingoRoles import lingo_roles
 
@@ -27,9 +27,12 @@ bot.remove_command('help')
 
 @bot.command(name='help')
 async def help_response(ctx):
-    embed = help_embed(ctx)
     try:
-        await ctx.author.send(embed)
+        embed = help_embed1(ctx)
+        await ctx.author.send(embed=embed)
+
+        embed2 = help_embed2(ctx)
+        await ctx.author.send(embed=embed2)
         await ctx.send(f"sent DM to {ctx.author.mention}")
     except discord.errors.HTTPException as e:
         logger.error(f"Error sending DM to {ctx.author}: {e}")
