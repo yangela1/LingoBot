@@ -292,7 +292,6 @@ _Admin commands_
 - [ ] Feature 1
 - [ ] Feature 2
 - [ ] Feature 3
-    - [ ] Nested Feature
 
 See the [open issues](https://github.com/github_username/repo_name/issues) for a full list of proposed features (and
 known issues).
@@ -336,9 +335,8 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 ## Author
 
-Your Name - [@twitter_handle](https://twitter.com/twitter_handle) - email@email_client.com
+Angela Yu - `angelayu8800@gmail.com`, [LinkedIn](http://linkedin.com/in/angela-yu99)
 
-Project Link: [https://github.com/github_username/repo_name](https://github.com/github_username/repo_name)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
