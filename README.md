@@ -283,9 +283,9 @@ _Admin commands_
 * [Add LingoBot roles](#add-roles)
 * [Remove LingoBot roles](#remove-roles)
 
-### ❓ Help
+### Help
 
-The help reply is sent to your DMs.
+❓ The help reply is sent to your DMs.
 
 The message provides a detailed list of commands you can use for the bot.
 
@@ -295,9 +295,9 @@ The message provides a detailed list of commands you can use for the bot.
 <img src="images/help1.png">
 <img src="images/help2.png"> 
 
-### 💰 Currency Guide
+### Currency Guide
 
-The help reply is sent to the channel.
+💰 The help reply is sent to the channel.
 
 When you play games, you earn currencies called 'kiwis'. There are two types of kiwis available: green kiwis and gold
 kiwis. Each game mode awards a different amount of currency. Details about the shop commands and the costs of items are
@@ -309,9 +309,9 @@ also provided.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-### 🎮 Play
+### Play
 
-Play the word guessing game. There are three game modes: normal, hard, and easy.
+🎮 Play the word guessing game. There are three game modes: normal, hard, and easy.
 
 🟠 **Normal mode**: Guess the translation of an English word.
 
@@ -331,9 +331,9 @@ Play the word guessing game. There are three game modes: normal, hard, and easy.
 
 <img src="images/requiz.png">
 
-### 🏁 Gameplay and Rewards Information
+### Gameplay and Rewards Information
 
-LingoBot provides feedback on your chosen answer. Your game statistics are updated after each guess and the new word is
+🏁 LingoBot provides feedback on your chosen answer. Your game statistics are updated after each guess and the new word is
 also stored to the database.
 
 In the `users` Collection:
@@ -358,18 +358,18 @@ In the `words` Collection:
  
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-### 🔍 Hints
+### Hints
 
-Buying a hint costs a certain amount of kiwis depending on the game mode. A synonym of the word is given.
+🔍 Buying a hint costs a certain amount of kiwis depending on the game mode. A synonym of the word is given.
 > Note: Hints are unable to be used in the easy game mode (`$requiz`).
 
 ```$hint```
 
 <img src="images/hint.png">
 
-### ⏩ Pass
+### Pass
 
-Buying a pass costs a certain amount of kiwis depending on the game mode. A pass will skip the current word without any
+⏩ Buying a pass costs a certain amount of kiwis depending on the game mode. A pass will skip the current word without any
 penalties and start a new game of the same mode.
 > Note: Passes are unable to be used in the easy game mode (`$requiz`).
 
@@ -377,18 +377,18 @@ penalties and start a new game of the same mode.
 
 <img src="images/pass.png">
 
-### ❤ Buy Lives
+### Buy Lives
 
-Buying a life costs a gold kiwi. Lives regenerate over time and the maximum amount of lives you can have at any time is
+❤ Buying a life costs a gold kiwi. Lives regenerate over time and the maximum amount of lives you can have at any time is
 three.
 
 ```$buylife```
 
 <img src="images/buylife.png">
 
-### 🎰 Gamble
+### Gamble
 
-Gambles any amount you wish that you have in your storage. Green kiwis are won or lost.
+🎰 Gambles any amount you wish that you have in your storage. Green kiwis are won or lost.
 
 ```$gamble <amount>```
 
@@ -396,17 +396,17 @@ Gambles any amount you wish that you have in your storage. Green kiwis are won o
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-### 💖 Lives
+### Lives
 
-View your remaining lives. 
+💖 View your remaining lives. 
 
 ```$lives```
 
 <img src="images/lives.png">
 
-### 👤 Profile
+### Profile
 
-Check your progress, lives, coins earned, stats, and special badges earned.
+👤 Check your progress, lives, coins earned, stats, and special badges earned.
 
 ```$profile``` 
 
@@ -414,17 +414,17 @@ For example, I have the role of `Lingo Einstein` so I have the badge on my profi
 
 <img src="images/profile.png">
 
-### 📊 Stats
+### Stats
 
-View your stats.
+📊 View your stats.
 
 ```$stat```
 
 <img src="images/stat.png">
 
-### 📚 My Words
+### My Words
 
-View the vocabulary you guessed correctly in the word bank.
+📚 View the vocabulary you guessed correctly in the word bank.
 
 ```$mywords```
 
@@ -432,17 +432,17 @@ View the vocabulary you guessed correctly in the word bank.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-### 🏆 Leaderboard
+### Leaderboard
 
-View the leaderboard in the current server. 
+🏆 View the leaderboard in the current server. 
 
 ```$lead```
 
 <img src="images/lead.png">
 
-### 🎭 Roles
+### Roles
 
-View how to earn special roles and badges. Scores are stored server wide.
+🎭 View how to earn special roles and badges. Scores are stored server wide.
 
 ```$roles```
 
@@ -454,17 +454,17 @@ For example, I have the role of `Lingo Einstein` within the server.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-### 📅 Word of the Day
+### Word of the Day
 
-Learn a new word daily. The given word is also stored in the user's word bank. 
+📅 Learn a new word daily. The given word is also stored in the user's word bank. 
 
 ```$wotd```
 
 <img src="images/wotd.png">
 
-### 🌐 Translate
+### Translate
 
-Translate a word (or sentence) from any language into the English translation. 
+🌐 Translate a word (or sentence) from any language into the English translation. 
 
 ```$trl <word(s) to translate> <source language>``` 
 
@@ -472,33 +472,33 @@ For example, I asked to translate 'hi how is your day' from Hungarian.
 
 <img src="images/translate.png">
 
-### 📖 Dictionary
+### Dictionary
 
-Get an English definition of a word.
+📖 Get an English definition of a word.
 
 ```$def <word>```
 
 <img src="images/define.png">
 
-### 🖼️ Image
+### Image
 
-Get a random photo representation of a word.
+🖼️ Get a random photo representation of a word.
 
 ```$img <word>```
 
 <img src="images/image.png">
 
-### ➕ Add Roles
+### Add Roles
 
-Quickly add all LingoBot roles to the server (use if roles are deleted by accident, etc.).
+➕ Quickly add all LingoBot roles to the server (use if roles are deleted by accident, etc.).
 
 ```$addl```
 
 <img src="images/add.png">
 
-### ➖ Remove Roles
+### Remove Roles
 
-Quickly remove all LingoBot roles from the server (use if you want to remove the Bot from the server or certain roles).
+➖ Quickly remove all LingoBot roles from the server (use if you want to remove the Bot from the server or certain roles).
 
 ```$removel```
 
