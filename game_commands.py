@@ -108,7 +108,7 @@ async def new_game(ctx):
     message = await ctx.send(embed=embed, view=view)
     view.message = message
     res = await view.wait()  # wait for view to stop by timeout or manually stopping
-
+    print(view.requiz)
     if res:
         print("timeout")
         view.correct_or_not = 'N'  # set to incorrect
@@ -391,7 +391,7 @@ async def get_hint(ctx):
         return
 
     # check if it is a requiz
-    if current_view.requiz is not None:
+    if current_view.requiz is True:
         await ctx.send("You cannot use a hint in a re-quiz.")
         return
 
@@ -785,7 +785,7 @@ async def pass_word_command(ctx):
         return
 
     # check if requiz
-    if current_view.requiz is not None:
+    if current_view.requiz is True:
         await ctx.send("You cannot pass during a re-quiz.")
         return
 

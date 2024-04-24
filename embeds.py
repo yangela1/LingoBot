@@ -262,7 +262,7 @@ def help_embed1(ctx):
     embed.add_field(name="🎮 PLAY COMMANDS", value="", inline=False)
     embed.add_field(name=f"$play: normal mode, earn green kiwis {s}", value="", inline=False)
     embed.add_field(name=f"$chal: hard mode, earn green {s} and gold kiwis {g}", value="", inline=False)
-    embed.add_field(name=f"$requiz: easy mode play a word you guessed incorrectly), earn green {s}", value="")
+    embed.add_field(name=f"$requiz: easy mode play a word you guessed incorrectly, earn green {s}", value="")
 
     embed.add_field(name="", value="\u200b", inline=False)
     embed.add_field(name=f"{s}CURRENCY GUIDE", value=f"There are two types of kiwi currency: green {s} and gold {g}. You can earn kiwis by playing "
