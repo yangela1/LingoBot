@@ -515,7 +515,8 @@ For example, I asked to translate 'hi how is your day' from Hungarian.
 - [ ] Refactoring code [in-progress] 
 - [ ] Add pins that players can buy to display on the profile
 - [ ] Incorporate use of slash commands
-- [ ] Pronunciation guide 
+- [ ] Pronunciation guide
+- [ ] Put features into user facing wiki
 
 See the [open issues](https://github.com/github_username/repo_name/issues) for a full list of proposed features (and
 known issues).
